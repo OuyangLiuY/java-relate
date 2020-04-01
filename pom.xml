@@ -12,6 +12,9 @@
         <module>HandSpringMVC</module>
         <module>netty</module>
         <module>thread</module>
+        <module>shiro</module>
+        <module>spring-bean</module>
+        <module>design-mode</module>
     </modules>
 
 
