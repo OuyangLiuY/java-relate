@@ -35,3 +35,4 @@ StoreLoad Barriers              Store1;StoreLoad;Load2;     确保Store1数据�
     2> final修饰引用变量时，该应用变量不能再指向其他对象。
     3> final修饰方法时，代表这个方法不可以被子类的方法重写。final方法比非final方法要快，因为在编译的时候已经静态绑定了
     4> final修饰类时，通常该类功能完整，不可以被继承。比如：String,Integer等
+       当一个类继承自另外一个类时，那这个类就可以拥有另一个类的域和方法。 所以：被final修饰的类是不能被继承的。因为
