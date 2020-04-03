@@ -1,13 +1,16 @@
 package com.tt.inner;
 
 public class InnerClass {
+    double two = 0;
 
     private void method() {
         System.out.println("innerclass");
     }
-    private Inner getInstance(){
+
+    private Inner getInstance() {
         return new Inner();
     }
+
     class Inner {
         private String aa = "10";
 
