@@ -15,6 +15,7 @@
         <module>shiro</module>
         <module>spring-bean</module>
         <module>design-mode</module>
+        <module>algorithm</module>
         <module>java-virtual-machine</module>
     </modules>
 

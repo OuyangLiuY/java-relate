@@ -1,4 +1,4 @@
-package com.ywb.sort;
+package sort;
 
 /**
  * 冒泡排序

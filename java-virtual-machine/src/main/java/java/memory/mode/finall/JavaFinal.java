@@ -4,6 +4,7 @@ public class JavaFinal {
     int i;
     final int j;
     static JavaFinal obj;
+
     JavaFinal(){
         i = 1;
         j = 2;
@@ -15,5 +16,8 @@ public class JavaFinal {
         JavaFinal object = obj;
         int a = object.i;
         int b = object.j;
+
     }
+
+
 }
