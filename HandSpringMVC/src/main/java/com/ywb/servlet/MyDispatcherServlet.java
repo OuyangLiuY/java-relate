@@ -46,15 +46,16 @@ public class MyDispatcherServlet extends HttpServlet
 
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         System.out.println("doPost()....");
         // 通过req获取请求的uri /HandSpringMVC/custom/query
         String uri = req.getRequestURI();
 
         // /HandSpringMVC
         String context = req.getContextPath();
+        System.out.println("context:" + context);
         String path = uri.replaceAll(context, "");
-
+        System.out.println("[path]:" + context);
         // 通过当前的path获取handlerMap的方法名
         Method method = (Method) handlerMap.get(path);
         // 获取beans容器中的bean
@@ -65,11 +66,10 @@ public class MyDispatcherServlet extends HttpServlet
         Object[] args = ha.handle(req, resp, method, beans);
 
         // 通过反射来实现方法的调用
+
         try {
             method.invoke(instance, args);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
             e.printStackTrace();
