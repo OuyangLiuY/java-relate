@@ -1,6 +1,5 @@
 package sync;
 
-import org.openjdk.jol.info.ClassLayout;
 
 public class Test implements  Runnable{
     int state;
@@ -16,7 +15,7 @@ public class Test implements  Runnable{
         }
     }
     public static void main(String[] args) {
-        System.out.println(ClassLayout.parseInstance(Test.class).toPrintable());
+        //System.out.println(ClassLayout.parseInstance(Test.class).toPrintable());
     }
 
 
