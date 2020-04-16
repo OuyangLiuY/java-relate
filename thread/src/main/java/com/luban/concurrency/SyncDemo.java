@@ -5,12 +5,12 @@ public class SyncDemo {
     Thread thread = new Thread(){
       @Override
       public void run() {
-        while (!Thread.currentThread().interrupted()){
+        while (!interrupted()){
           try {
             Thread.sleep(10000);
           } catch (InterruptedException e) {
             interrupt();
-            System.out.println(Thread.currentThread().interrupted());
+            System.out.println(interrupted());
             e.printStackTrace();
           }
 
