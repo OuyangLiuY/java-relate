@@ -16,9 +16,9 @@ public class JOLExample7 {
             public void run() {
                 synchronized (a){
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(1500);
                         System.out.println("t1 release");
-                    } catch (InterruptedException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -29,6 +29,7 @@ public class JOLExample7 {
         out.println("t1 lock ing");
         out.println(ClassLayout.parseInstance(a).toPrintable());//轻量锁
         sync();
+
         out.println("after lock");
         out.println(ClassLayout.parseInstance(a).toPrintable());//无锁
 
@@ -42,5 +43,6 @@ public class JOLExample7 {
             System.out.println("t1 main lock");
             out.println(ClassLayout.parseInstance(a).toPrintable());//重量锁
         }
+        //Thread.sleep(1000);
     }
 }
