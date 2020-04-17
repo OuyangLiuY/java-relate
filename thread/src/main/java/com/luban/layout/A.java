@@ -7,4 +7,8 @@ public class A {
         i++;
         JOLExample6.countDownLatch.countDown();
     }
+
+    public int getI() {
+        return i;
+    }
 }

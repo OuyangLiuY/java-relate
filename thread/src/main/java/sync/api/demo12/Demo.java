@@ -30,7 +30,7 @@ public class Demo {
             threads.add(new Thread(demo::test, "thread-" + i));
         }
 
-        threads.forEach((o)->o.start());
+        threads.forEach(Thread::start);
 
         threads.forEach((o)->{
             try {

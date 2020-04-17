@@ -56,6 +56,10 @@ public class LockSpeedTest {
             System.out.println(ClassLayout.parseInstance(a).toPrintable());
             long begin = System.currentTimeMillis();
             for (int i = 0; i < 100000000; i++) {
+                if(aa == 100000){
+                    System.out.println("ing:");
+                    System.out.println(ClassLayout.parseInstance(a).toPrintable());
+                }
                 method();
             }
             long end = System.currentTimeMillis();
@@ -133,6 +137,7 @@ public class LockSpeedTest {
             },"t2");
             t1.start();
             t2.start();
+            //t1 t2 执行完之后在执行主线程
             t1.join();
             t2.join();
             // 5537ms
@@ -147,32 +152,6 @@ public class LockSpeedTest {
             }
         }
     }
-    static  class Test{
-        static com.luban.layout.A a;
-        public static void main(String[] args) throws Exception {
-            a = new A();
-            out.println("befre lock");
-            out.println(ClassLayout.parseInstance(a).toPrintable());
-            long begin = System.currentTimeMillis();
-            for (int i = 0; i < 100000000; i++) {
-                sync();
-            }
-            long end = System.currentTimeMillis();
-            // 2000ms
-            System.out.println((end - begin) + "ms");
-            System.out.println(aa);
 
-            out.println("after lock");
-            out.println(ClassLayout.parseInstance(a).toPrintable());
-        }
-
-        public  static  void sync() throws InterruptedException {
-            synchronized (a){
-                aa++;
-                /*out.println("lock ing");
-                out.println(ClassLayout.parseInstance(a).toPrintable());*/
-            }
-        }
-    }
 }
 

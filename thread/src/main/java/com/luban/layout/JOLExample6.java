@@ -6,7 +6,7 @@ import java.util.concurrent.CountDownLatch;
 import static java.lang.System.out;
 
 public class JOLExample6 {
-    static CountDownLatch countDownLatch = new CountDownLatch(1000000000);
+    static CountDownLatch countDownLatch = new CountDownLatch(100000000);
     public static void main(String[] args) throws Exception {
         final A a = new A();
 
@@ -26,6 +26,7 @@ public class JOLExample6 {
         }
         countDownLatch.await();
         long end = System.currentTimeMillis();
+        System.out.println(a.getI());
         System.out.println(String.format("%sms", end - start));
 
     }

@@ -9,7 +9,7 @@ import static java.lang.System.out;
 public class JOLExample12 {
     static List<A> list = new ArrayList<A>();
     public static void main(String[] args) throws Exception {
-
+       // Thread.sleep(5000);
         Thread t1 = new Thread() {
             public void run() {
                 for (int i=0;i<40;i++){
@@ -17,6 +17,7 @@ public class JOLExample12 {
                     synchronized (a){
                         System.out.println("111111");
                         list.add(a);
+                        out.println(ClassLayout.parseInstance(a).toPrintable());
                     }
                 }
 
