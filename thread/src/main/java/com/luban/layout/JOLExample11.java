@@ -8,7 +8,7 @@ public class JOLExample11 {
     public static void main(String[] args) throws Exception {
         //Thread.sleep(5000);
         a = new A();
-        out.println("befre lock");
+        out.println("befre concur.lock");
         out.println(ClassLayout.parseInstance(a).toPrintable());
 
         Thread t1= new Thread(){

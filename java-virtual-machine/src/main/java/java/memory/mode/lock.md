@@ -29,33 +29,33 @@
     借助 ReentrantLock 的源代码，来分析锁内存语义的具体实现机制。
     class ReentrantLockExample {
     int a = 0;
-    ReentrantLock lock = new ReentrantLock();
+    ReentrantLock concur.lock = new ReentrantLock();
     public void writer() {
-        lock.lock();         // 获取锁 
+        concur.lock.concur.lock();         // 获取锁 
         try {
             a++;
         } finally {
-            lock.unlock();  // 释放锁 
+            concur.lock.unlock();  // 释放锁 
         }
     }
     public void reader () {
-        lock.lock();        // 获取锁 
+        concur.lock.concur.lock();        // 获取锁 
         try {
             int i = a;
             ……
         } finally {
-            lock.unlock();  // 释放锁 
+            concur.lock.unlock();  // 释放锁 
         }
     }
     }
-    在 ReentrantLock 中，调用 lock() 方法获取锁；调用 unlock() 方法释放锁。
+    在 ReentrantLock 中，调用 concur.lock() 方法获取锁；调用 unlock() 方法释放锁。
     ReentrantLock 的实现依赖于 java 同步器框架 AbstractQueuedSynchronizer（本文简称之为 AQS）。
     AQS 使用一个整型的 volatile 变量（命名为 state）来维护同步状态，马上我们会看到，这个 volatile 变量是 ReentrantLock 内存语义实现的关键。
 ReentrantLock 分为公平锁和非公平锁。 
     公平锁：
-    使用公平锁时，加锁方法 lock() 的方法调用轨迹如下：
-        1.ReentrantLock : lock()
-        2.FairSync : lock()
+    使用公平锁时，加锁方法 concur.lock() 的方法调用轨迹如下：
+        1.ReentrantLock : concur.lock()
+        2.FairSync : concur.lock()
         3.AbstractQueuedSynchronizer : acquire(int arg)
         4.ReentrantLock : tryAcquire(int acquires)
         在第 4 步真正开始加锁，下面是该方法的源代码：
@@ -72,7 +72,7 @@ ReentrantLock 分为公平锁和非公平锁。
                 else if (current == getExclusiveOwnerThread()) {
                     int nextc = c + acquires;
                     if (nextc < 0)  
-                        throw new Error("Maximum lock count exceeded");
+                        throw new Error("Maximum concur.lock count exceeded");
                     setState(nextc);
                     return true;
                 }
@@ -101,8 +101,8 @@ ReentrantLock 分为公平锁和非公平锁。
         根据 volatile 的 happens-before 规则，释放锁的线程在写 volatile 变量之前可见的共享变量，
         在获取锁的线程读取同一个 volatile 变量后将立即变的对获取锁的线程可见。
     非公平锁的获取:(因非公平锁的释放和公平锁完全一样，所以这里仅仅分析非公平锁的获取。)
-        1.ReentrantLock : lock()
-        2.NonfairSync : lock()
+        1.ReentrantLock : concur.lock()
+        2.NonfairSync : concur.lock()
         3.AbstractQueuedSynchronizer : compareAndSetState(int expect, int update)
         在第 3 步真正开始加锁，下面是该方法的源代码：
             protected final boolean compareAndSetState(int expect, int update) {
@@ -120,10 +120,10 @@ ReentrantLock 分为公平锁和非公平锁。
             public final native boolean compareAndSwapInt(Object o, long offset,int expected,int x);   
         可以看到这是个本地方法调用。这个本地方法在 openjdk 中依次调用的 c++ 代码为：unsafe.cpp，atomic.cpp 和 atomicwindowsx86.inline.hpp。这个本地方法的最终实现在 openjdk 的如下位置：openjdk-7-fcs-src-b147-27jun2011\openjdk\hotspot\src\oscpu\windowsx86\vm\ atomicwindowsx86.inline.hpp（对应于 windows 操作系统，X86 处理器）。
         下面是对应于 intel x86 处理器的源代码的片段：
-            // Adding a lock prefix to an instruction on MP machine
-            // VC++ doesn't like the lock prefix to be on a single line
-            // so we can't insert a label after the lock prefix.
-            // By emitting a lock prefix, we can define a label after it.
+            // Adding a concur.lock prefix to an instruction on MP machine
+            // VC++ doesn't like the concur.lock prefix to be on a single line
+            // so we can't insert a label after the concur.lock prefix.
+            // By emitting a concur.lock prefix, we can define a label after it.
             #define LOCK_IF_MP(mp) __asm cmp mp, 0  \
                                    __asm je L0      \
                                    __asm _emit 0xF0 \
@@ -139,17 +139,17 @@ ReentrantLock 分为公平锁和非公平锁。
                 cmpxchg dword ptr [edx], ecx
               }
             }
-        如上面源代码所示，程序会根据当前处理器的类型来决定是否为 cmpxchg 指令添加 lock 前缀。
-        如果程序是在多处理器上运行，就为 cmpxchg 指令加上 lock 前缀（lock cmpxchg）。
-        反之，如果程序是在单处理器上运行，就省略 lock 前缀（单处理器自身会维护单处理器内的顺序一致性，不需要 lock 前缀提供的内存屏障效果）。
-        intel 的手册对 lock 前缀的说明如下：
-            1.确保对内存的读 - 改 - 写操作原子执行。在 Pentium 及 Pentium 之前的处理器中，带有 lock 前缀的指令在执行期间会锁住总线，
+        如上面源代码所示，程序会根据当前处理器的类型来决定是否为 cmpxchg 指令添加 concur.lock 前缀。
+        如果程序是在多处理器上运行，就为 cmpxchg 指令加上 concur.lock 前缀（concur.lock cmpxchg）。
+        反之，如果程序是在单处理器上运行，就省略 concur.lock 前缀（单处理器自身会维护单处理器内的顺序一致性，不需要 concur.lock 前缀提供的内存屏障效果）。
+        intel 的手册对 concur.lock 前缀的说明如下：
+            1.确保对内存的读 - 改 - 写操作原子执行。在 Pentium 及 Pentium 之前的处理器中，带有 concur.lock 前缀的指令在执行期间会锁住总线，
             使得其他处理器暂时无法通过总线访问内存。很显然，这会带来昂贵的开销。
             从 Pentium 4，Intel Xeon 及 P6 处理器开始，intel 在原有总线锁的基础上做了一个很有意义的优化：
-            如果要访问的内存区域（area of memory）在 lock 前缀指令执行期间已经在处理器内部的缓存中被锁定（即包含该内存区域的缓存行当前处于独占或以修改状态），
+            如果要访问的内存区域（area of memory）在 concur.lock 前缀指令执行期间已经在处理器内部的缓存中被锁定（即包含该内存区域的缓存行当前处于独占或以修改状态），
             并且该内存区域被完全包含在单个缓存行（cache line）中，那么处理器将直接执行该指令。
             由于在指令执行期间该缓存行会一直被锁定，其它处理器无法读 / 写该指令要访问的内存区域，因此能保证指令执行的原子性。
-            这个操作过程叫做缓存锁定（cache locking），缓存锁定将大大降低 lock 前缀指令的执行开销，
+            这个操作过程叫做缓存锁定（cache locking），缓存锁定将大大降低 concur.lock 前缀指令的执行开销，
             但是当多处理器之间的竞争程度很高或者指令访问的内存地址未对齐时，仍然会锁住总线。
             2.禁止该指令与之前和之后的读和写指令重排序。
             3.把写缓冲区中的所有数据刷新到内存中。

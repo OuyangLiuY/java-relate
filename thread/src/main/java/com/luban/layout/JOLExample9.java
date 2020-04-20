@@ -8,7 +8,7 @@ public class JOLExample9 {
     public static void main(String[] args) throws Exception {
         Thread.sleep(5000);
         a= new A();
-        out.println("befor lock");
+        out.println("befor concur.lock");
         out.println(ClassLayout.parseInstance(a).toPrintable());
 
         Thread thread = new Thread(){
@@ -16,7 +16,7 @@ public class JOLExample9 {
             public void run() {
 
                 synchronized (a){
-                    out.println("t lock ing");
+                    out.println("t concur.lock ing");
                     out.println(ClassLayout.parseInstance(a).toPrintable());
                 }
             }
@@ -24,7 +24,7 @@ public class JOLExample9 {
         thread.start();
         Thread.sleep(10);
         synchronized (a){
-            out.println("main lock ing");
+            out.println("main concur.lock ing");
             out.println(ClassLayout.parseInstance(a).toPrintable());
         }
         Thread thread2 = new Thread(){
@@ -32,7 +32,7 @@ public class JOLExample9 {
             public void run() {
 
                 synchronized (a){
-                    out.println("t2 lock ing");
+                    out.println("t2 concur.lock ing");
                     out.println(ClassLayout.parseInstance(a).toPrintable());
                 }
             }
@@ -40,10 +40,10 @@ public class JOLExample9 {
         thread2.start();
         Thread.sleep(10);
         synchronized (a){
-            out.println("main lock ing");
+            out.println("main concur.lock ing");
             out.println(ClassLayout.parseInstance(a).toPrintable());
         }
-        out.println("after lock");
+        out.println("after concur.lock");
         out.println(ClassLayout.parseInstance(a).toPrintable());
     }
 }

@@ -9,13 +9,13 @@ public class JOLExample8 {
         Thread.sleep(5000);
         a= new A();
         a.hashCode();
-        out.println("befor lock");
+        out.println("befor concur.lock");
         out.println(ClassLayout.parseInstance(a).toPrintable());
         synchronized (a){
-            out.println("lock ing");
+            out.println("concur.lock ing");
             out.println(ClassLayout.parseInstance(a).toPrintable());
         }
-        out.println("after lock");
+        out.println("after concur.lock");
         out.println(ClassLayout.parseInstance(a).toPrintable());
     }
 }

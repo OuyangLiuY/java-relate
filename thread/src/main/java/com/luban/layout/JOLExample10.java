@@ -11,7 +11,7 @@ public class JOLExample10 {
             @Override
             public void run() {
                 synchronized (a){
-                    out.println("t1 lock ing");
+                    out.println("t1 concur.lock ing");
                     out.println(ClassLayout.parseInstance(a).toPrintable());
                 }
             }
@@ -20,7 +20,7 @@ public class JOLExample10 {
         t1.join();
        //Thread.sleep(6000);
         synchronized (a){//a b c c+++
-            out.println("main lock ing");
+            out.println("main concur.lock ing");
             out.println(ClassLayout.parseInstance(a).toPrintable());
         }
 
@@ -29,7 +29,7 @@ public class JOLExample10 {
 //            public void run() {
 //
 //                synchronized (a){
-//                    out.println("t2 lock ing");
+//                    out.println("t2 concur.lock ing");
 //                    out.println(ClassLayout.parseInstance(a).toPrintable());
 //                }
 //            }
@@ -37,10 +37,10 @@ public class JOLExample10 {
 //        thread2.start();
 //        Thread.sleep(10);
 //        synchronized (a){
-//            out.println("main lock ing");
+//            out.println("main concur.lock ing");
 //            out.println(ClassLayout.parseInstance(a).toPrintable());
 //        }
-        out.println("after lock");
+        out.println("after concur.lock");
         out.println(ClassLayout.parseInstance(a).toPrintable());
     }
 }
