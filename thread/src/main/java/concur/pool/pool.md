@@ -20,7 +20,7 @@ Executors.newFixedThreadPool(5);// 创建一个固定(Fixed)大小为5的线程�
 Executors.newSingleThreadExecutor();// 创建一个只有一个线程执行的任务队列。
 Executors.newScheduledThreadPool(4);// 创建固定大小的线程用来每间隔多少时间来执行。
 Executors.newWorkStealingPool();// 创建一个根据cpu核心数大小容量的任务队列 stealing(剽窃，偷)。
-守护线程：如果主线程结束，后台去执行。
+守护线程：(如果主线程结束)，后台执行。
 ForkJoin -> 
 interface Future
 FutureTask      //callable  没有阻塞等待结果的，所以需要Future来接受这个callable返回的值。   

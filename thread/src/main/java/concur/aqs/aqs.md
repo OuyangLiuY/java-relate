@@ -19,4 +19,7 @@ volatile
 final
 happens-before
 
+reentrant的优势：synchronized提供了便捷性的隐式获取释放锁机制（基于JVM机制）;
+但是它缺少获取锁与释放锁的可操作性，可中断，超时等待，且它为独占式在高并发场景下性能大打折扣。
+
      
