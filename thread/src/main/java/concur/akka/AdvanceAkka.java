@@ -9,9 +9,9 @@ import akka.http.javadsl.model.HttpResponse;
 import akka.http.scaladsl.model.HttpRequest;
 import akka.pattern.AskTimeoutException;
 import akka.pattern.Patterns;
-import akka.stream.ActorMaterializer;
-import akka.stream.Materializer;
 import akka.util.Timeout;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -21,6 +21,27 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeoutException;
 
 public class AdvanceAkka {
+
+    /**
+     * 调度
+     */
+    static class Dispatcher extends AbstractActor {
+
+        @Override
+        public Receive createReceive() {
+            return receiveBuilder().matchAny((message)->{
+                System.out.println(getSelf() + "--->" +Thread.currentThread().getName());
+            }).build();
+        }
+
+        public static void main(String[] args) {
+            ActorSystem system = ActorSystem.create("sys", ConfigFactory.load("dispatcher.conf"));
+            ActorRef actorRef = system.actorOf(Props.create(Dispatcher.class), "Dispatcher");
+            actorRef.tell("hello",ActorRef.noSender());
+        }
+    }
+
+    static class MailBox{}
 
     static class FutureActor extends AbstractActor {
         @Override
@@ -43,12 +64,12 @@ public class AdvanceAkka {
             String reply = (String) Await.result(future, timeout.duration());
             System.out.println(reply);
 
-            future.onSuccess(new OnSuccess<Object>() {
+            /*future.onSuccess(new OnSuccess<Object>() {
                 @Override
                 public void onSuccess(Object msg) throws Throwable {
                     System.out.println("success: " + msg);
                 }
-            }, system.dispatcher());
+            }, system.dispatcher());*/
 
             future.onFailure(new OnFailure() {
                 @Override
@@ -75,7 +96,7 @@ public class AdvanceAkka {
     }
 
     static class HttpClient {
-        static class Demo{
+      /*  static class Demo{
             public static void main(String[] args) {
                 final ActorSystem system = ActorSystem.create();
 
@@ -88,7 +109,7 @@ public class AdvanceAkka {
                     }), materializer);
                 });
             }
-        }
+        }*/
     }
 
     /**
@@ -123,11 +144,7 @@ public class AdvanceAkka {
     static class Persist {
     }
 
-    /**
-     * 调度
-     */
-    static class Dispatcher {
-    }
+
 
     /**
      * 路由
@@ -135,5 +152,5 @@ public class AdvanceAkka {
     static class Route {
     }
     static class RemoteActor{}
-    static class MailBox{}
+
 }

@@ -27,7 +27,7 @@ public class DispatcherDemo {
     }
 
     public static void main(String[] args) {
-        ActorSystem system = ActorSystem.create("sys", ConfigFactory.load("dispacher.conf"));
+        ActorSystem system = ActorSystem.create("sys", ConfigFactory.load("dispatcher.conf"));
         for(int i=0;i<50;i++) {
             // 每个Actor一个线程池（池中只有一个线程）
 //            ActorRef ref = system.actorOf(Props.create(SimpleDemo.class).withDispatcher("my-pinned-dispatcher"),"actorDemo"+i);
