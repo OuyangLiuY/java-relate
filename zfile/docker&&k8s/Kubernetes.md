@@ -1,6 +1,6 @@
 # Kubernetes
 
-主讲：鲁班学院-华安
+ k8s教程
 
 <hr>
 

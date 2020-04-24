@@ -57,20 +57,20 @@
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.typesafe.akka/akka-stream -->
-        <dependency>
+        <!--<dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-stream_2.13</artifactId>
             <version>2.6.4</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.typesafe.akka/akka-cluster -->
+        &lt;!&ndash; https://mvnrepository.com/artifact/com.typesafe.akka/akka-cluster &ndash;&gt;
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-cluster_2.13</artifactId>
             <version>2.6.4</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.typesafe.akka/akka-testkit -->
+        &lt;!&ndash; https://mvnrepository.com/artifact/com.typesafe.akka/akka-testkit &ndash;&gt;
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-testkit_2.13</artifactId>
@@ -78,18 +78,18 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.typesafe.akka/akka-slf4j -->
+        &lt;!&ndash; https://mvnrepository.com/artifact/com.typesafe.akka/akka-slf4j &ndash;&gt;
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-slf4j_2.13</artifactId>
             <version>2.6.4</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.typesafe.akka/akka-remote -->
+        &lt;!&ndash; https://mvnrepository.com/artifact/com.typesafe.akka/akka-remote &ndash;&gt;
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-remote_2.13</artifactId>
             <version>2.6.4</version>
-        </dependency>
+        </dependency>-->
 
 
 

@@ -4,6 +4,7 @@ groovy sacala
 Actor 模型
 共享内存， by 消息
 Actor 消息 消息通信。
+
 Akka
 ---
 public
@@ -27,4 +28,18 @@ akka可能的缺点：
     3.Akka不是处理工作流的最优选
     4.Akka不提供事务性的保证，而且几乎把所有分布式通信（即使是单机内分布式）中会出现的问题全部都交给开发人员自己考虑和设计。
     
-    **这是一个测试**
+
+```java
+public void test(){
+   	System.out.println("输出一个测试～！");
+}
+```
+
+
+
+```shell
+docker-compose version
+```
+
+
+

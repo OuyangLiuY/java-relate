@@ -12,7 +12,7 @@
 # 登录阿里云的docker仓库
 $ sudo docker login --username=[用户名] registry.cn-hangzhou.aliyuncs.com
 # 创建指定镜像的tag，归入某个仓库
-$ sudo docker tag [镜像ID] registry.cn-hangzhou.aliyuncs.com/huaan/huaan:[镜像版本号]
+$ sudo cel
 # 讲镜像推送到仓库
 $ sudo docker push registry.cn-hangzhou.aliyuncs.com/huaan/huaan:[镜像版本号]
 ```
@@ -22,7 +22,23 @@ $ sudo docker push registry.cn-hangzhou.aliyuncs.com/huaan/huaan:[镜像版本�
 ```shell
 docker pull registry.cn-hangzhou.aliyuncs.com/coldest7/mytom:v1
 ```
-
+```java
+//java  测试
+public class Ts {
+    static int x =20;
+    static  boolean  flag =false;
+    public static void main(String[] args) {
+        new Thread(()->{
+            x =40;
+            flag =true;
+        }).start();
+        new Thread(()->{
+            if(flag)
+                System.out.println(x);
+        }).start();
+    }
+}
+```
 # Docker 网络
 
 Docker允许通过外部访问容器或容器互联的方式来提供网络服务。
@@ -184,7 +200,7 @@ Compose的使用非常简单，只需要编写一个docker-compose.yml，然后�
 
 1.我们使用一个微服务项目先来做一个简单的例子，首先创建一个compose的工作目录，然后创建一个eureka文件夹，里面放可执行jar包和编写一个Dockerfile文件，目录结构如下：
 
-```
+```yaml
 compose
 	eureka
 		Dockerfile
