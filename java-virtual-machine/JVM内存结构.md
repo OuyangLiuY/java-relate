@@ -15,11 +15,11 @@ JVM由三个主要的子系统构成：
 
 - 类加载子系统
 
-  ![](D:\workspace\Spring_framework\images\jvm\类加载过程.jpg)
+  ![](../images/jvm/类加载过程.jpg)
 
 - 运行时数据区（内存结构）
 
-  ![](D:\workspace\Spring_framework\images\jvm\运行时数据区.jpg)
+  ![](../images/jvm/运行时数据区.jpg)
 
 - 执行引擎
 
@@ -39,7 +39,7 @@ JVM由三个主要的子系统构成：
 
 虚拟机启动时自动分配创建，用于存放对象的实例，几乎所有对象（包括常量池）都在堆上分配内存，当对象无法在该空间申请到内存是将抛出OutOfMemoryError异常。同时也是垃圾收集器管理的主要区域。
 
-![](D:\workspace\Spring_framework\images\jvm\堆.jpg)
+![](../images/jvm/堆.jpg)
 
 #### 2.1新生代(Young Generation)
 
@@ -63,7 +63,7 @@ JVM由三个主要的子系统构成：
 
 大概意思就是移除永久代时为融合HotSpot于JRockit而做出的努力，因为JRockit没有永久代，不需要配置永久代。
 
-![](D:\workspace\Spring_framework\images\jvm\移除永久代.jpg)
+![](../images/jvm/移除永久代.jpg)
 
 ### 3.栈
 
