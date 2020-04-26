@@ -343,3 +343,339 @@ class Bar extends  Foo{
 
 打印第4步在构造函数中调用对象方法不会被执行。
 
+## 类加载器的种类
+
+#### 启动类加载器（Bootstrap ClassLoader）
+
+负责加载JRE的核心类库，如JRE目录下的rt.jar,charset.jar等
+
+#### 扩展类加载器（Extension ClassLoader）
+
+负责加载JRE扩展目录ext中jar类包
+
+#### 系统类加载器（Application ClassLoader)
+
+负责加载Class Path路径下的类包
+
+#### 自定义加载器（User ClassLoader）
+
+负责加载用户自定义路径下的类包
+
+![](../images/jvm/类加载器.jpg)
+
+## 类加载机制
+
+### 全盘负责委托机制
+
+当一个ClassLoader加载一个类的时候，除非显式的使用另外一个ClassLoader，该类所依赖和引用的类也由这个ClassLoader载入
+
+### 双亲委派机制
+
+指先委托父类加载器寻找目标类，在找不到的情况下，在自己路径中查找并载入目标类
+
+**双亲委派模式的优势：**
+
+- 沙箱安全机制：比如自己写的String.class类不会被加载，因为核心库中已经有了该类，而加载是先在核心库中加载，这样就可以防止核心库被随意篡改。
+- 避免类的重复加载：当父ClassLoader已经加载了该类的时候，就不需要子ClassLoader再加载一次。
+
+## JVM性能调优监控工具
+
+### Jinfo
+
+查看正在运行的Java程序的扩展参数：
+
+**查看JVM的参数：**
+
+![](../images/jvm/jinfo.jpg)
+
+**查看Java系统属性：**
+
+等同于System.getProperties();
+
+![](../images/jvm/JVMprops.jpg)
+
+### Jstat
+
+jstat命令可以查看堆内存各部分的使用量，以及加载类的数量。命令格式：
+
+jstat [-命令选项] [vmid] [间隔时间/毫秒] [查询次数]
+
+**类加载统计:** jstat -class [id]
+
+![](../images/jvm/jstat-class.jpg)
+
+| Loaded          | **Bytes**      | **Unloaded** | **Bytes**      | **Time** |
+| --------------- | -------------- | ------------ | -------------- | -------- |
+| 加载class的数量 | 所占用空间大小 | 未加载数量   | 未加载占用空间 | 时间     |
+
+**垃圾回收统计：** jstat -gc [id]
+
+![](../images/jvm/jstat-gc.jpg)
+
+SOC：第一个Survior区的空间
+
+S1C：第二个Survivor区的空间
+
+S0U：第一个Survivor区的使用空间
+
+S1U：第二个Survivor区的使用空间
+
+EC：Eden区的总空间
+
+EU：Eden区的使用空间
+
+OC：Old区的总空间
+
+OU：Old区的已使用空间
+
+MC：元空间的总空间
+
+MU：元空间的使用空间
+
+CCSC：压缩类的总空间
+
+CCSU：压缩类的使用空间
+
+YGC:年轻代垃圾回收消耗时间
+
+YGCT：年轻代垃圾回收消耗时间
+
+FGC：老年代垃圾回收次数
+
+FGCT：老年代垃圾回收消耗的时间
+
+GCT：垃圾回收消耗总时间
+
+**堆内存统计:** jstat -gccapacity [id]
+
+![](../images/jvm/jstat-capacity.jpg)
+
+NGCMN:新生代最小空间
+
+NGCMX：新生代最大空间
+
+NGC：当前新生代空间
+
+S0C:第一个Survivor区空间
+
+S1C：第二个Survivor区空间
+
+EC：Eden区的总空间
+
+OGCMN：老爱年代最小空间
+
+OGCMX:老年代最大空间
+
+OGC：当前老年代空间
+
+OC：当前老年代空间
+
+MCMN：最小元空间大小
+
+MCMX：最大元空间大小
+
+MC：当前元空间大小
+
+CCSMN：最小压缩类空间大小
+
+CCSMX：最大压缩类空间大小
+
+CCSC：当前压缩类空间大小
+
+YGC：年轻代GC次数
+
+FGC：老年代GC次数
+
+**新生代垃圾统计：** 	jstat -gcnew [id]
+
+![](../images/jvm/jstat-gcnew.jpg)
+
+S0C：第一个Survivor区空间
+
+S1C：第二个Survivor区空间
+
+S0U：第一个Survivor区的使用空间
+
+S1U：第二个Survivor区的使用空间
+
+TT：对象在新生代存活的次数
+
+MTT：对象在新生代存活的最大次数
+
+DSS：期望Survivor区大小
+
+EC：Eden区的空间
+
+EU：Eden区的使用空间
+
+YGC：年轻代垃圾回收次数
+
+YGCT：年轻代垃圾回收消耗时间
+
+**新生代内存统计：**	jstat -gcnewcapacity [id]
+
+![](../images/jvm/jstat-gcnewcapacity.jpg)
+
+NGCMN：新生代最小空间
+
+NGCMX：新生代最大空间
+
+NGC：当前新生代空间
+
+S0CMX：最大第一个Survivor区空间
+
+S0C：当前第一个Survivor区空间
+
+S1CMX：最大第二个Survivor区空间
+
+S1C：当前第二个Survivor区空间
+
+ECMX：最大Eden区空间
+
+EC：当前Eden区空间
+
+YGC：年轻代垃圾回收次数
+
+FGC：老年代垃圾回收次数
+
+**老年代垃圾回收统计:**	jstat -gcold [id]
+
+![](../images/jvm/jstat-gcold.jpg)
+
+MC：元空间的总空间
+
+MU：元空间的使用空间
+
+CCSC：压缩类的总空间
+
+CCSU：压缩类的使用空间
+
+OC：Old区的总空间
+
+OU：Old区的已使用空间
+
+YGC：年轻代GC次数
+
+FGC：老年代GC次数
+
+FGCT：老年代垃圾回收消耗时间
+
+GCT：垃圾回收消耗总时间
+
+**老年代内存统计：**	jstat -gcoldcapacity [id]
+
+![](../images/jvm/jstat-gcoldcapacity.jpg)
+
+OGCMN：老年代最小空间
+
+OGCMX：老年代最大空间
+
+OGC：当前老年代空间
+
+OC：当前老年代空间
+
+YGC：年轻代GC次数
+
+FGC：老年代GC次数
+
+FGCT：老年代垃圾回收消耗时间
+
+GCT：垃圾回收消耗总时间
+
+**元空间内存统计：**	jstat -gcmetacapacity [id]
+
+![](../images/jvm/jstat-gcmetacapacity.jpg)
+
+MCMN：最小元空间大小
+
+MCMX：最大元空间大小
+
+MC：当前元空间大小
+
+CCSMN：最小压缩类空间大小
+
+CCSMX：最大压缩类空间大小
+
+CCSC：当前压缩类空间大小
+
+YGC：年轻代GC次数
+
+FGC：老年代GC次数
+
+FGCT：老年代垃圾回收消耗时间
+
+GCT：垃圾回收消耗总时间
+
+**总垃圾回收统计：**	jstat -gcutil [id]
+
+![](../images/jvm/jstat-gcutil.jpg)
+
+S0：第一个Survivor区当前使用比例
+
+S1：第二个Survivor区当前使用比例
+
+E：Eden区使用比例
+
+O：Old区使用比例
+
+M：元空间使用比例
+
+CCS：压缩使用比例
+
+YGC：年轻代垃圾回收次数
+
+YGCT：年轻代垃圾回收消耗时间
+
+FGC：老年代垃圾回收次数
+
+FGCT：老年代垃圾回收消耗时间
+
+GCT：垃圾回收消耗总时间
+
+### Jmap
+
+可以用来查看内存信息
+
+**堆的对象统计**
+
+```
+jmap -histo [id] > xxx.txt
+```
+
+如图：
+
+![](../images/jvm/jmap-histo.jpg)
+
+num：序号
+
+instances：实例数量
+
+Bytes：占用空间大小
+
+Class Name：类名
+
+**堆信息**
+
+![](../images/jvm/jmap-heap.jpg)
+
+**堆内存dump**	jmap -dump:format=b,file=xxx.hprof [id]
+
+![](../images/jvm/jmap-dump.jpg)
+
+也可以在设置内存溢出的时候自动导出dump文件（内存很大的时候，可能会导不出来）
+
+```
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=输出路径
+-Xms10m -Xmx10m -XX:+PrintGCDetails 
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=d:\oomdump.dump
+```
+
+可以使用jvisualvm命令工具导入文件分析
+
+### Jstack：
+
+jstack用于生成java虚拟机当前时刻的线程快照。
+
+![](../images/jvm/jstack.jpg)
