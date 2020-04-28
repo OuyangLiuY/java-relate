@@ -219,7 +219,7 @@ public class PrimaryAkka {
 
         }
 
-        public static void main(String args[]) {
+        public static void main(String[] args) {
             ActorSystem system = ActorSystem.create("sys");
             ActorRef actorRef = system.actorOf(Props.create(BecomeActor.class), "BecomeActor");
             actorRef.tell("1", ActorRef.noSender());

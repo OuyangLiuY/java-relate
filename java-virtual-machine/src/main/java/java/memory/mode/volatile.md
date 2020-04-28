@@ -83,7 +83,6 @@ class VolatileBarrierExample {
 
 
 
-
 ​      在缺乏同步的情况下，可能会遇到某个对象引用的更新值（由另一个线程写入）和该对象状态的旧值同时存在。
 ​      这就是造成著名的双重检查锁定（double-checked-locking）问题的根源，其中对象引用在没有同步的情况下进行读操作，
 ​      产生的问题是您可能会看到一个更新的引用，但是仍然会通过该引用看到不完全构造的对象。
@@ -105,21 +104,8 @@ class VolatileBarrierExample {
 ​     5.“volatile bean” 模式
 ​        volatile bean 模式的基本原理是：很多框架为易变数据的持有者（例如 HttpSession）提供了容器，但是放入这些容器中的对象必须是线程安全的。
 ​        在 volatile bean 模式中，JavaBean 的所有数据成员都是 volatile 类型的，并且 getter 和 setter 方法必须非常普通——即不包含约束
-​     
-​        
-​        
-​        
-​        
-​        
-​        
-​        
-​        
-​        
-​        
-​        
-​        
-​        
-​        
+​   
+
 参考链接地址：https://www.infoq.cn/article/java-memory-model-4        
-​        
+
 ​        

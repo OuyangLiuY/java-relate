@@ -1,11 +1,13 @@
-## JVM性能调优
+## JVM内存结构
+
+JVM学习主要包括以下几个方面：
 
 - JVM内存结构
 - 类加载机制和JDK的调优工具命令
 - GC日志格式
 - GC调优实战
 
-java虚拟机（java virtual machine），一种能够运行java字节码的虚拟机。作为一种编程语言的虚拟机，实际上不只是专用于Java语言，只要生成的编译文件匹配JVM对加载编译文件格式要求，任何语言都可以由JVM编译运行。比如：kotlin、scala等。
+Java虚拟机（java virtual machine），一种能够运行java字节码的虚拟机。作为一种编程语言的虚拟机，实际上不只是专用于Java语言，只要生成的编译文件匹配JVM对加载编译文件格式要求，任何语言都可以由JVM编译运行。比如：kotlin、scala等。
 
 jvm有很多，如Hotspot，还有JRockit、J9等
 
