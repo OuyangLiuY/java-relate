@@ -3,6 +3,7 @@ package classloader;
 import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 
 import java.io.*;
+import java.util.UUID;
 
 public class MyClassLoader extends ClassLoader {
 
@@ -47,11 +48,12 @@ public class MyClassLoader extends ClassLoader {
     }
 
     public static void main(String[] args) throws IllegalAccessException, InstantiationException, ClassNotFoundException {
-        MyClassLoader loader = new MyClassLoader();
+        /*MyClassLoader loader = new MyClassLoader();
         loader.setRoot("/home/temp/temp");
         Class testClass = null;
         testClass = loader.loadClass("");
         Object obj = testClass.newInstance();
-        System.out.println(obj.getClass().getClassLoader());
+        System.out.println(obj.getClass().getClassLoader());*/
+        System.out.println(UUID.randomUUID());
     }
 }

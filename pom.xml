@@ -17,6 +17,7 @@
         <module>design-mode</module>
         <module>algorithm</module>
         <module>java-virtual-machine</module>
+        <module>JavaNewFeatures</module>
     </modules>
      <build>
         <defaultGoal>install</defaultGoal>
