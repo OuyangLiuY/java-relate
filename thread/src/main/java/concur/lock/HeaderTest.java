@@ -47,5 +47,13 @@ public class HeaderTest {
     //09 9d e1 40 || 00001001 10011101 11100001 01000000
     //15 00 00 00 || 00010101 00000000 00000000 00000000
 
+    int bb = 10;
+    final int[] cc = new int[10];
+    public void methodB() {
+        synchronized (cc) {
+            System.out.println("locking:" + Thread.currentThread().getName());
+            System.out.println(ClassLayout.parseInstance(a).toPrintable());
+        }
+    }
 
 }

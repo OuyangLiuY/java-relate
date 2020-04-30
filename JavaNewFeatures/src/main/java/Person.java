@@ -3,7 +3,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.function.*;
 
-public class Person {
+public class  Person {
     int id;
     String name;
 

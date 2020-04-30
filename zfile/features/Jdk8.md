@@ -310,53 +310,396 @@ return Optional.ofNullable(order).map(order1 -> order1.name).orElse(null);
 
 ## Stream
 
-### 什么是Stream
+Java8中的Stream是对集合（Collection）对象功能的增强，它专注于对集合对象进行各种非常便利、高效的聚合操作（aggregate operation），或者大批量数据操作（bulk data operation）。Stream API借助 于同样新出现的Lamdba表达式，极大的提高编程效率和程序可读性。同时它提供串行和并行两种模式进行汇聚操作，并发模式能够充分利用多核处理器的优势，使用fork/join并行方式来拆分和加速处理过程，通常编写并行代码很难而且容易出错，但使用Stream API无需编写一行多线程的代码，就可以很方便地写出高性能地并发程序。所以说，Java8中首次出现地java.util.stream是一个函数语言+多核时代综合影响地产物。
 
-### Stream的特点
+在传统地J2EE应用中，Java代码经常不得不依赖于关系型数据库地操作如：取平均值、取最大最小值、取汇总值、或者进行分组等等类似地这些操作。
 
-### Stream构成
+但在当今这个数据大爆炸地时代，在数据来源多样化、数据海量化地今天，很多时候不得不脱离RDBMS，或者以底层返回地数据为基础进行更上层地数据统计。而Java地集合API中，仅仅有极少量地辅助型方法，更多地时候是程序员需要用Iterator来遍历集合，完成相关地聚合应用逻辑。这是一种远不够高效、笨拙地方法。
+
+所以此时可以在Java8中使用Stream，代码更加简单易读，而且使用并发模式，程序执行速度更快。
+
+```java
+public static  public static void main(String[] args) {
+        Collection<Student> students = Arrays.asList(
+                new Student(1, "李梅", Grade.FIRST,60),
+                new Student(2, "李斯", Grade.SECOND,80),
+                new Student(3, "嬴政", Grade.THIRD,70),
+                new Student(4, "吕不韦", Grade.THIRD,50));
+        List<Integer> ageList = students.stream().filter(student -> student.getGrade().equals(Grade.THIRD)).sorted(Comparator.comparingInt(Student::getScore)).map(Student::getAge).collect(Collectors.toList());
+        System.out.println(ageList.toString());
+    }
+```
+
+
+
+### 什么是Stream：
+
+Stream不是集合元素，它不是数据结构并且不保存数据，它是有关算法和计算的，它更像一个高级版本的Iterator。
+
+### Stream的特点：
+
+- 1、Iterator，用户只能显示地一个一个遍历元素并对其执行某些操作；Stream，用户只要给出需要对其包含地元素执行什么操作，比如“过滤掉长度大于10地字符串”、“获取每个字符串地首字母”等，Stream会隐士地在内部进行遍历，做出相应地数据转换。
+- 2、Stream就如同一个Iterator，单向，不可往复，数据只能遍历一次，遍历一次后即用尽了，就好比流水流过，一去不复返。
+- 3、Stream可以并行化操作，Iterator只能命令式的、串行化操作。顾名思义，当使用串行方式去遍历时，每个item读完再读下一个item。而使用并行去遍历，数据会被分成多个段，其中每一个都再不同地线程中处理，然后将结果一起输出，Stream的并行操作依赖于Java7中引入的Fork/Join框架来拆分任务和加速处理过程。
+
+### Stream构成：
+
+当我们使用一个流的时候，通常包括三个基本步骤：
+
+获取一个数据源 ————>数据转换————>执行操作获取想要的结果，每次转换原来Stream对象不改变，返回一个新的Stream对象（可以有多次转换），这就允许对其操作可以像链条一样排列，变成一个管道，如下图所示：
+
+
 
 ### 生成Stream Source的方式：
 
-### Stream的操作类型
+- 从Collection和数据生成:
+  - Collection.stream()
+  - Arrays.stream(T array)
+  - Stream.of(T t)
+- 从 BufffferedReader
+  - java.io.BufffferedReader.lines()
+- 静态工厂
+  - java.util.stream.IntStream.range()
+  - java.nio.fifile.Files.walk()
+- 自己构建
+  - java.util.Spliterator
+- 其他
+  - Random.ints()
+  - BitSet.stream()
+  - Pattern.splitAsStream(java.lang.CharSequence)
+  - JarFile.stream()
 
-### Stream的使用
+### Stream的操作类型：
+
+- **中间操作(Intermediate Operation)：**一个流可以后面跟随零个或多个 intermediate 操作。其目的主要时打开流，做出某种程度的数据映射/过滤，然后返回一个新的流，交给下一个操作使用，这类操作都是惰性化的，就是说，仅仅调用到这类方法，并没有真正开始流的遍历。
+
+- **终止操作（Terminal Operation）:**一个流只能有一个 terminal 操作，当这个操作执行后，流就被使
+
+  用“光”了，无法再被操作。所以这必定是流的最后一个操作。Terminal 操作的执行，才会真正开始
+
+  流的遍历，并且会生成一个结果。
+
+Intermediate Operation又可以分为两种类型：
+
+- 无状态操作：操作时无状态的，不需要知道集合中其他元素的状态，每个元素之间时相互独立的，比如map()、filter()等操作。
+- 有状态操作：有状态操作，操作时需要知道集合中其他元素的状态才能进行的，比如sort()、distinct()。
+
+Terminal Operation从逻辑上可以分为两种：
+
+- 短路操作（short-circuiting)：短路操作时指不需要处理完所有元素即可结束整个过程。
+- 非短路操作（non-short-circuiting）：非短路操作时需要处理完所有元素之后才能结束整个过程。
+
+### Stream的使用：
+
+简单说，对 Stream 的使用就是实现一个 fifilter-map-reduce 过程，产生一个最终结果，或者导致一个副作用。
 
 ### 构造流的几种常见方式：
 
-### 数值流的构造
+```java
+		//Individual value
+        Stream<String> stream = Stream.of("a", "b", "c");
+        //Arrays
+        String[] ab = new String[]{"a","b","c"};
+        Stream<String> stream1 = Stream.of(ab);
+        Stream<String> stream2 = Arrays.stream(ab);
+        //Collections
+        ArrayList<String> list = new ArrayList<>();
+        Stream<String> stream3 = list.stream();
+```
+
+需要注意的是，对于基本数值型，目前有三种对应的包装类型 Stream：
+
+IntStream、LongStream、DoubleStream。当然也可以使用 Stream、Stream 、Stream，但是boxing和unboxing会很耗时，所以特别为这三种基本数据类型提供了对应的Stream。
+
+Java 8 中还没有提供其他数值型Stream，因为这将导致扩增的内容较多，而常规的数值型聚合运算可以通过上面三种Stream进行，
+
+### 数值流的构造：
+
+```java
+  IntStream.of(1,2,4,5).forEach(System.out::println);
+  IntStream.range(1,6).forEach(System.out::println);
+  IntStream.rangeClosed(1,6).forEach(System.out::println);
+```
+
+
 
 ### 流转换为其他数据结构
 
-### 流的典型用法
+```java
+   Stream<String> streams = Stream.<String>of(new String[]{"1", "2", "3"});
+   List<String> list1 = streams.collect(Collectors.toList());
+   List<String> list2 = streams.collect(Collectors.toCollection(ArrayList::new));
+   String str = streams.collect(Collectors.joining(","));
+   System.out.println(str);     
+```
+
+一个 Stream 只可以使用一次，上面的代码为了简洁而重复使用了数次。
+
+### 流的典型用法:
 
 ### map/flatMap
 
+先来看map。如果你熟悉 scala 这类函数式语言，对这个方法应该很了解，它的作用就是把 input Stream
+
+的每一个元素，映射成 output Stream 的另外一个元素。
+
+```java
+Stream<String> stream = Stream.of("a", "b", "c");
+stream.map(String::toUpperCase).forEach(System.out::println);
+```
+
+这段代码把所有的字母转换为大写。map 生成的是个 1:1 映射，每个输入元素，都按照规则转换成为另外一个元
+
+素。还有一些场景，是一对多映射关系的，这时需要 flflatMap。
+
+```java
+         Stream<List<Integer>> inputStream = Stream.of(
+                Arrays.asList(1),
+                Arrays.asList(2, 3),
+                Arrays.asList(4, 5, 6)
+        );
+       // Stream<Integer> mapStream = inputStream.map(List::size);
+        Stream<Integer> integerStream = inputStream.flatMap(Collection::stream);
+        integerStream.forEach(System.out::println);
+```
+
 ### filter
+
+fifilter 对原始 Stream 进行某项测试，通过测试的元素被留下来生成一个新 Stream。
+
+```java
+Integer[] nums = new Integer[]{1,2,3,4,5,6};
+Arrays.stream(nums).filter(n -> n<3).forEach(System.out::println);
+```
+
+将小于3的数字留下来。
 
 ### forEach
 
+forEach 是 terminal 操作，因此它执行后，Stream 的元素就被“消费”掉了，你无法对一个 Stream 进行两次terminal 运算。下面的代码会报错。
+
+```java
+Integer[] nums = new Integer[]{1,2,3,4,5,6};
+Stream stream = Arrays.stream(nums);
+stream.forEach(System.out::print);
+stream.forEach(System.out::print);
+```
+
+相反，具有相似功能的 intermediate 操作 peek 可以达到上述目的。
+
+```java
+Integer[] nums = new Integer[]{1,2,3,4,5,6};
+ Stream stream = Arrays.stream(nums);
+ stream
+ .peek(System.out::print)
+ .peek(System.out::print)
+ .collect(Collectors.toList());
+//打印结果
+//112233445566
+//得知 peek，是将操作同时执行两次
+```
+
+forEach 不能修改自己包含的本地变量值，也不能用 break/return 之类的关键字提前结束循环。下面的代码还是打印出所有元素，并不会提前返回。
+
+```java
+Integer[] nums = new Integer[]{1,2,3,4,5,6};
+ Arrays.stream(nums).forEach(integer -> {
+ 	System.out.print(integer);
+	return;
+ });
+```
+
+**forEach** 和常规 和常规 **for** 循环的差异不涉及到性能，它们仅仅是函数式风格与传统循环的差异不涉及到性能，它们仅仅是函数式风格与传统 **Java** 风格的差别。 
+
 ### reduce
+
+这个方法的主要作用是把 Stream 元素组合起来。它提供一个起始值（种子），然后依照运算规则（BinaryOperator），和前面 Stream 的第一个、第二个、第 n 个元素组合。从这个意义上说，字符串拼接、数值的 sum、min、max、average 都是特殊的 reduce。例如 Stream 的 sum 就相当于：
+
+```java
+Integer[] nums = new Integer[]{1,2,3,4,5,6};
+Integer sum = Arrays.stream(nums).reduce(0, (integer, integer2) ->
+integer+integer2);
+ System.out.println(sum);
+```
+
+也有没有起始值的情况，这时会把 Stream 的前面两个元素组合起来，返回的是 Optional。
+
+```java
+Integer[] nums = new Integer[]{1,2,3,4,5,6};  	
+//有初始化值
+Integer sum = Arrays.stream(nums).reduce(0, Integer::sum);        
+//无初始化值
+Integer sum1 = Arrays.stream(nums).reduce(Integer::sum).get();
+```
 
 ### limit/skip
 
+limit 返回 Stream 的前面 n 个元素；skip 则是扔掉前 n 个元素。
+
+```java
+Integer[] nums = new Integer[]{1,2,3,4,5,6};  
+Arrays.stream(nums).limit(3).forEach(System.out::print);
+//123
+System.out.println();
+Arrays.stream(nums).skip(2).forEach(System.out::print);
+//3456
+```
+
 ### sorted
+
+对 Stream 的排序通过 sorted 进行，它比数组的排序更强之处在于你可以首先对 Stream 进行各类 map、fifilter、limit、skip 甚至 distinct 来减少元素数量后，再排序，这能帮助程序明显缩短执行时间。
+
+```java
+Integer[] nums = new Integer[]{1,2,3,4,5,6};  
+Arrays.stream(nums).sorted((i1, i2) ->
+                i2.compareTo(i1)).limit(3).forEach(System.out::print);
+ // 654  
+System.out.println();   
+Arrays.stream(nums).sorted(Comparator.naturalOrder()).skip(2).forEach(System.out::print);
+//3456
+System.out.println();
+Arrays.stream(nums).sorted(Comparator.reverseOrder()).skip(2).forEach(System.out::print);
+//4321
+```
+
+
 
 ### min/max/distinct
 
+```java
+Integer[] nums = new Integer[]{1, 2, 2, 3, 4, 5, 5, 6};
+System.out.println(Arrays.stream(nums).min(Comparator.naturalOrder()).get());
+//  1    
+System.out.println(Arrays.stream(nums).max(Comparator.naturalOrder()).get());
+// 6
+Arrays.stream(nums).distinct().forEach(System.out::print);
+//123456
+```
+
 ### Match
+
+- allMatch：Stream 中全部元素符合传入的 predicate，返回 true
+- anyMatch：Stream 中只要有一个元素符合传入的 predicate，返回 true
+- noneMatch：Stream 中没有一个元素符合传入的 predicate，返回 true
+
+它们都不是要遍历全部元素才能返回结果。例如 allMatch 只要一个元素不满足条件，就 skip 剩下的所有元素，返回 false。
+
+```java
+Integer[] nums = new Integer[]{1, 2, 2, 3, 4, 5, 5, 6};
+System.out.println(Arrays.stream(nums).allMatch(integer -> integer < 7));
+//true        
+System.out.println(Arrays.stream(nums).anyMatch(integer -> integer< 2));
+//true        
+System.out.println(Arrays.stream(nums).noneMatch(integer -> integer< 2));
+//false
+```
+
+
 
 ### 用Collectors来进行reduction操作
 
+java.util.stream.Collectors 类的主要作用就是辅助进行各类有用的 reduction 操作,例如转变输出为 Collection，把 Stream 元素进行归组。
+
 ### groupingBy/PartitioningBy
+
+例如对上面的Student进行按年级进行分组：
+
+```java
+  Collection<Student> students = Arrays.asList(
+                new Student(1, "李梅", Grade.FIRST, 60),
+                new Student(2, "李斯", Grade.SECOND, 80),
+                new Student(3, "嬴政", Grade.THIRD, 70),
+                new Student(4, "吕不韦", Grade.THIRD, 50));
+        // 按年级分组
+        students.stream().collect(Collectors.groupingBy(Student::getGrade)).forEach(((grade, students1) -> {
+            System.out.println(grade);
+            students1.forEach(student -> System.out.println(student.toString()));
+        }));
+```
+
+打印结果：
+
+```
+SECOND
+Student{age=2, name='李斯', grade=SECOND}
+THIRD
+Student{age=3, name='嬴政', grade=THIRD}
+Student{age=4, name='吕不韦', grade=THIRD}
+FIRST
+Student{age=1, name='李梅', grade=FIRST}
+```
+
+例如对上面的Student进行按分数段进行分组：
+
+```java
+ // 按分数段分组
+        studentss.stream().collect(Collectors.partitioningBy(student -> student.getScore()>=60)).forEach(((grade, students1) -> {
+            System.out.println(grade);
+            students1.forEach(student -> System.out.println(student.toString()));
+        }));
+```
+
+打印结果：
+
+```
+false
+Student{age=4, name='吕不韦', grade=THIRD}
+true
+Student{age=1, name='李梅', grade=FIRST}
+Student{age=2, name='李斯', grade=SECOND}
+Student{age=3, name='嬴政', grade=THIRD}
+```
+
+
 
 ### parallelStream
 
+parallelStream其实就是一个并行执行的流.它通过默认的ForkJoinPool,可以提高你的多线程任务的速度。
+
 ### parallelStream使用
+
+```java
+ Arrays.stream(nums).parallel().forEach(System.out::print);
+        
+System.out.println(Arrays.stream(nums).parallel().reduce(Integer::sum).get());
+        
+System.out.println();
+        
+Arrays.stream(nums).forEach(System.out::print);
+        
+System.out.println(Arrays.stream(nums).reduce(Integer::sum).get());
+
+```
+
+
 
 ### parallelStream要注意的问题
 
+parallelStream底层是使用的ForkJoin。而ForkJoin里面的线程是通过ForkJoinPool来运行的，Java 8为
+
+ForkJoinPool添加了一个通用线程池，这个线程池用来处理那些没有被显式提交到任何线程池的任务。它是
+
+ForkJoinPool类型上的一个静态元素。它拥有的默认线程数量等于运行计算机上的处理器数量，所以这里就出现
+
+了这个java进程里所有使用parallelStream的地方实际上是公用的同一个ForkJoinPool。parallelStream提供了更简单的并发执行的实现，但并不意味着更高的性能，它是使用要根据具体的应用场景。如果cpu资源紧张
+
+parallelStream不会带来性能提升；如果存在频繁的线程切换反而会降低性能。
+
 ### Stream总结
+
+1. 不是数据结构，它没有内部存储，它只是用操作管道从 source（数据结构、数组、generator function、
+
+   IO channel）抓取数据。
+
+2. 它也绝不修改自己所封装的底层数据结构的数据。例如 Stream 的 fifilter 操作会产生一个不包含被过滤元素的新 Stream，而不是从 source 删除那些元素。
+
+3. 所有 Stream 的操作必须以 lambda 表达式为参数。
+
+4. 惰性化，很多 Stream 操作是向后延迟的，一直到它弄清楚了最后需要多少数据才会开始，Intermediate
+
+   操作永远是惰性化的。
+
+5. 当一个 Stream 是并行化的，就不需要再写多线程代码，所有对它的操作会自动并行进行的。
 
 ## Date/Time  API
 
