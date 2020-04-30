@@ -6,6 +6,11 @@ public class Student {
     Grade grade;
     int score;
 
+    void Sample(){
+         Object ref = null;
+    }
+
+
     public Student(int age, String name, Grade grade,int score) {
         this.age = age;
         this.name = name;

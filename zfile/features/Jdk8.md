@@ -797,22 +797,403 @@ Duration使计算两个日期间的不同变的十分简单
 
 ### 重复注解
 
+假设,现在有一个服务我们需要定时运行,就像Linux中的cron一样,假设我们需要它在每周三的12点运行一
+次,那我们可能会定义一个注解,有两个代表时间的属性。
+
+```java
+public @interface RepeatAnnotation {
+    int dayOfWeek() default 1; //周几？
+    int hour() default 0;   //几点？
+}
+```
+
+所以我们可以给对应的服务方法上使用该注解,代表运行的时间:
+
+```java
+public class ScheduleService {
+    @Schedule(dayOfWeek = 3,hour = 12)
+    public void start(){
+        System.out.println("定时运行任务！");
+    }
+}
+```
+
+那么如果我们需要这个服务在每周四的13点也需要运行一下,如果是JDK8之前,那么...尴尬了!你不能像下面的
+代码,会编译错误
+
+```java
+public class ScheduleService {
+    @Schedule(dayOfWeek = 3,hour = 12)
+    @Schedule(dayOfWeek = 4,hour = 13)
+    public void start(){
+        System.out.println("定时运行任务！");
+    }
+}
+```
+
+那么如果是JDK8,你可以改一下注解的代码,在自定义注解上加上@Repeatable元注解,并且指定重复注解的存
+储注解(其实就是需要需要数组来存储重复注解),这样就可以解决上面的编译报错问题。
+
+```java
+@Repeatable(value = Schedule.Schedules.class)
+public @interface Schedule {
+    int dayOfWeek() default 1; //周几？
+    int hour() default 0;   //几点？
+
+    @interface Schedules{
+        Schedule[] value();
+    }
+}
+```
+
+同时,反射相关的API提供了新的函数getAnnotationsByType()来返回重复注解的类型。
+添加main方法:
+
+```java
+public static void main(String[] args) {
+    try {
+        Method method = ScheduleService.class.getMethod("start");
+        for(Annotation annotation : method.getAnnotations()){
+            System.out.println(annotation);
+        }
+        //Schedule[] annotationsByType = method.getAnnotationsByType(Schedule.class);
+        for(Schedule s : method.getAnnotationsByType(Schedule.class)){
+            System.out.println(s.dayOfWeek() + "->" + s.hour());
+        }
+    } catch (NoSuchMethodException e) {
+        e.printStackTrace();
+    }
+}
+```
+
+**找不到注解！！！！！！未找到原因！！！！**
+
 ### 扩展注解
+
+注解就相当于一种标记，在程序中加了注解就等于为程序加了某种标记。
+
+JDK 8 之前的注解只能加在：
+
+- 1、类，接口，枚举
+- 2、类型变量
+- 3、方法
+- 4、方法参数
+- 5、构造方法
+- 6、局部变量
+- 7、注解类型
+- 8、包
+
+JDK 11的注解类型：
+
+```java
+public enum ElementType {
+    /** Class, interface (including annotation type), or enum declaration */
+    TYPE,
+
+    /** Field declaration (includes enum constants) */
+    FIELD,
+
+    /** Method declaration */
+    METHOD,
+
+    /** Formal parameter declaration */
+    PARAMETER,
+
+    /** Constructor declaration */
+    CONSTRUCTOR,
+
+    /** Local variable declaration */
+    LOCAL_VARIABLE,
+
+    /** Annotation type declaration */
+    ANNOTATION_TYPE,
+
+    /** Package declaration */
+    PACKAGE,
+
+    /**
+     * Type parameter declaration
+     *
+     * @since 1.8
+     */
+    TYPE_PARAMETER,
+
+    /**
+     * Use of a type
+     *
+     * @since 1.8
+     */
+    TYPE_USE,
+
+    /**
+     * Module declaration.
+     *
+     * @since 9
+     */
+    MODULE
+}
+```
+
+
+
+JDK8中新增了两种：
+
+1、TYPE_PARAMNETER，表示该注解能写在类型变量的声明语句中。
+
+2、TYPE_USER，表示该注解能写在使用类型的任何语句中
+
+JDK9中新增了一种：
+
+- MODULE
+
+checkerframework中的各种校验注解,比如:@Nullable, @NonNull等等。
+
+```java
+public class GetStarted {
+		void sample() {
+			@NonNull Object ref = null;
+	}
+}
+```
+
+
 
 ### 更好的类型推测机制
 
+```java
+public class Value<T> {
+    public static<T> T defaultValue() {
+        return null;
+    }
+    public T getOrDefault(T value, T defaultValue) {
+        return value != null ? value : defaultValue;
+    }
+    public static void main(String[] args) {
+        Value<String> value = new Value<>();
+        System.out.println(value.getOrDefault("22", Value.defaultValue()));
+    }
+}
+```
+
+上面的代码重点关注value.getOrDefault("22", Value.defaultValue()), 在JDK8中不会报错,那么在JDK7中
+呢?
+
+答案是会报错: Wrong 2nd argument type. Found: 'java.lang.Object', required:
+'java.lang.String' 。所以Value.defaultValue()的参数类型在JDK8中可以被推测出,所以就不必明确给
+出。
+
 ### 参数名字保留在字节码中
+
+先来想一个问题:JDK8之前,怎么获取一个方法的参数名列表?
+
+在JDK7中一个Method对象有下列方法:
+
+- `Method.getParameterAnnotations()`获取方法参数上的注解
+- `Method.getParameterTypes()` 获取方法的参数类型列表
+
+但是没有能够获取到方法的参数名字列表！
+
+在JDK8中增加了两个方法：
+
+- `Method.getParameters()` 获取参数名字列表
+- `Method.getParameterCount()` 获取参数名字个数
 
 ### StampedLock
 
+是对读写锁ReentrantReadWriteLock的增强，该类提供了一些功能，优化了读锁，写锁的访问，同时使读写索之间可以相互转换，更细粒度控制并发。
+
 ### ReentrantLock
+
+ReentrantLock类，实现了Lock接口，是一种可重入的独占锁，它具有与使用synchronized相同的一些基本行为和语义，但功能更脚矮强大，ReentrantLock内部通过内部类实现了AQS框架(AbstractQueuedSynchronizer)的API来
+实现独占锁的功能。
 
 ### ReentrantReadWriteLock
 
+ReentrantReadWriteLock和ReentrantLock不同,ReentrantReadWriteLock实现的是ReadWriteLock接口。
+
+```
+读写锁的概念:加读锁时其他线程可以进行读操作但不可进行写操作,加写锁时其他线程读写操作都不可进行。
+```
+
+但是,读写锁如果使用不当,很容易产生饥饿”问题。在ReentrantReadWriteLock中,当读锁被使用时,如
+果有线程尝试获取写锁,该写线程会阻塞。在读线程非常多,写线程很少的情况下,很容易导致写线程“饥
+饿”,虽然使用“公平”策略可以一定程度上缓解这个问题,但是“公平”策略是以牺牲系统吞吐量为代价的。
+
 ### 并行数组
+
+Java 8增加了大量的新方法来对数组进行并行处理。可以说,最重要的是parallelSort()方法,因为它可以在多核
+机器上极大提高数组排序的速度。下面的例子展示了新方法(parallelXxx)的使用。
+下面的代码演示了先并行随机生成20000个0-1000000的数字,然后打印前10个数字,然后使用并行排序,再次
+打印前10个数字。
+
+```java
+  long b1 = System.currentTimeMillis();
+        long [] num = new long[200000000];
+        for (int i = 0; i < num.length; i++) {
+            num[i] = new Random().nextLong();
+        }
+        long end1 = System.currentTimeMillis();
+        System.out.println(end1 - b1 + "ms") ;
+
+        long nextLong = new Random().nextInt(10000000);
+        System.out.println(nextLong);
+
+        long b = System.currentTimeMillis();
+        Arrays.setAll(num,index -> ThreadLocalRandom.current().nextInt(10000000));
+        Arrays.stream(num).limit(10).forEach(i -> System.out.print(i + "\t"));
+
+        System.out.println();
+        System.out.println();
+
+        long end = System.currentTimeMillis();
+        System.out.println(end - b + "ms") ;
+        long end2 = System.currentTimeMillis();
+        Arrays.sort(num);
+//        Arrays.parallelSort(num);
+        long ends = System.currentTimeMillis();
+        Arrays.stream(num).limit(10).forEach(i -> System.out.print(i + "\t"));
+        System.out.println();
+        System.out.println((ends -end2) + "ms");
+```
+
+注意：只有在大数据量的情况下并行排序的执行时间是串行排序的执行时间n倍。
 
 ### 获取方法参数的名字
 
+在Java8之前,我们如果想获取方法参数的名字是非常困难的,需要使用ASM、javassist等技术来实现,现在,
+在Java8中则可以直接在Method对象中就可以获取了。
+
+```java
+public class ParameterNames
+{
+   public void test(String str1 ,String str2){
+
+    }
+
+    public static void main(String[] args) {
+        try {
+            Method method = ParameterNames.class.getMethod("test",String.class,String.class);
+            for (Parameter parameter : method.getParameters()) {
+                System.out.println(parameter.getName());
+            }
+            System.out.println(method.getParameterCount());
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+输出:
+
+```
+arg0
+arg1
+2
+```
+
+从结果可以看出输出的参数个数正确,但是名字不正确!需要在编译时增加–parameters参数后再运行。
+
+```maven
+<plugin>
+<groupId>org.apache.maven.plugins</groupId>
+<artifactId>maven-compiler-plugin</artifactId>
+<version>3.1</version>
+<configuration>
+<compilerArgument>-parameters</compilerArgument>
+<source>1.8</source>
+<target>1.8</target>
+</configuration>
+</plugin>
+```
+
+
+
 ### CompletableFuture
 
+当我们Javer说异步调用时,我们自然会想到Future,比如:
+
+```java
+public class FutureDemo {
+/**
+*
+* @param args
+*/
+public static void main(String[] args) {
+ExecutorService executor = Executors.newCachedThreadPool();
+Future<Integer> result = executor.submit(new Callable<Integer>() {
+public Integer call() throws Exception {
+int sum=0;
+System.out.println("
+...");
+for (int i=0; i<100; i++) {
+sum = sum + i;
+}
+Thread.sleep(TimeUnit.SECONDS.toSeconds(3));
+System.out.println("
+");
+return sum;
+}
+});
+System.out.println("
+...");
+try {
+System.out.println("result:" + result.get());
+} catch (Exception e) {
+e.printStackTrace();
+}
+System.out.println("
+executor.shutdown();
+}
+}
+```
+
+
+
+那么现在如果想实现异步计算完成之后,立马能拿到这个结果继续异步做其他事情呢?这个问题就是一个线程依
+赖另外一个线程,这个时候Future就不方便,我们来看一下CompletableFuture的实现:
+
+```java
+  public static void main(String[] args) {
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        CompletableFuture result = CompletableFuture.supplyAsync(() -> {
+            int sum=0;
+            System.out.println("...");
+            for (int i=0; i<100; i++) {
+                sum = sum + i;
+            }
+            try {
+                Thread.sleep(TimeUnit.SECONDS.toSeconds(3));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(Thread.currentThread().getName()+" 计算完毕");
+            return sum;
+        }, executor).thenApplyAsync(sum -> {
+            System.out.println(Thread.currentThread().getName()+"打印"+sum);
+            return sum;
+        }, executor);
+        System.out.println("...");
+        try {
+            System.out.println("result:" + result.get());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("...");
+    }
+```
+
+只需要简单的使用thenApplyAsync就可以实现了。
+
+CompletableFuture还有很多其他的特性，需要慢慢来学。
+
+```
+Java8的特性还有Stream和Optional,这两个也是用的特别多的,相信很多同学早有耳闻,并且已经对这两个的特性有所了解,所以本片博客就不进行讲解了,有机会再单独讲解,可讲的内容还是非常之多的对于Java8,新增的特性还是非常之多的,就是目前Java11已经出了,但是Java8中的特性肯定会一直在后续的版本中保留的,至于这篇文章的这些新特性我们估计用的比较少,所以特已此篇来进行一个普及,希望都有所收货。
+```
+
+
+
 ### Java虚拟机（JVM）的新特性 
+
+PermGen空间被移除了,取而代之的是Metaspace(JEP 122)。JVM选项-XX:PermSize与-XX:MaxPermSize分
+别被-XX:MetaSpaceSize与-XX:MaxMetaspaceSize所代替。
