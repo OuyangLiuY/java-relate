@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.luban.product.mapper.ProductMapper">
+
+
+
+    <select id="getProductByArrayPage"  resultType="Map">
+      select * from luban_product
+    </select>
+
+    <select id="getProductPage" parameterType="Map" resultType="Map">
+        select * from luban_product   limit #{start} , #{limit}
+    </select>
+
+    <select id="getProductCount"  resultType="int">
+        select count(0) from luban_product
+    </select>
+
+
+    <!--第一步 执行一条couunt语句-->
+
+    <!--第二部 重写sql  select * from luban_product  limit start,limit -->
+
+    <!--得在mybatis 执行 sql语句之前 重写sql 并且执行count-->
+
+    <select id="getProductByPage" parameterType="Map" resultType="Map">
+        select * from luban_product
+    </select>
+
+
+
+
+
+    <select id="getProductByRowboundsPage" resultType="Map">
+        select * from luban_product where name = #{name}
+    </select>
+
+
+
+
+
+
+
+
+</mapper>

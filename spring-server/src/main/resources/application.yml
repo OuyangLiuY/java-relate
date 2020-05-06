@@ -1,0 +1,4 @@
+server:
+  port: 9001
+mybatis:
+  mapper-locations: classpath:product/ProductMapper.xml
