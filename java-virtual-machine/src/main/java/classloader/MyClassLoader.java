@@ -1,6 +1,5 @@
 package classloader;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 
 import java.io.*;
 import java.util.UUID;
@@ -22,14 +21,14 @@ public class MyClassLoader extends ClassLoader {
         String fileName = root + File.separator + className.replace('.', File.separatorChar) + ".class";
         try {
             InputStream inputStream = new FileInputStream(fileName);
-            ByteOutputStream out = new ByteOutputStream();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
             int buffsize = 1024;
             byte[] buffer = new byte[buffsize];
             int length = 0;
             while ((length = inputStream.read(buffer)) != -1) {
                 out.write(buffer, 0, length);
             }
-            return out.getBytes();
+            return out.toByteArray();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
