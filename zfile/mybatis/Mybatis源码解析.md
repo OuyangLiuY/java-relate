@@ -1047,9 +1047,308 @@ public ResultSetWrapper(ResultSet rs, Configuration configuration) throws SQLExc
 
 ### 一级缓存
 
+1. 关系：
+
+sqlsession和Executor以及Cache的关系图：
+
+![cache](../../images/mybatis/cache.png)
+
+如上述的类图所示，Executor接口的实现类BaseExecutor中拥有一个Cache接口的实现类PerpetualCache，**则对于BaseExecutor对象而言，它将使用PerpetualCache对象维护缓存**
+
+综上，SqlSession对象、Executor对象、Cache对象之间的关系如下图所示：
+
+![perpetualCache](../../images/mybatis/perpetualCache.png)
+
+2. PerpetualCache:
+
+**PerpetualCache实现原理其实很简单，其内部就是通过一个简单的HashMap 来实现的，没有其他的任何限制。如下是PerpetualCache的实现代码：**
+
+```java
+public class PerpetualCache implements Cache {
+
+  private final String id;
+
+  private final Map<Object, Object> cache = new HashMap<>();
+
+  public PerpetualCache(String id) {
+    this.id = id;
+  }
+
+  @Override
+  public String getId() {
+    return id;
+  }
+
+  @Override
+  public int getSize() {
+    return cache.size();
+  }
+
+  @Override
+  public void putObject(Object key, Object value) {
+    cache.put(key, value);
+  }
+
+  @Override
+  public Object getObject(Object key) {
+    return cache.get(key);
+  }
+
+  @Override
+  public Object removeObject(Object key) {
+    return cache.remove(key);
+  }
+
+  @Override
+  public void clear() {
+    cache.clear();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (getId() == null) {
+      throw new CacheException("Cache instances require an ID.");
+    }
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof Cache)) {
+      return false;
+    }
+
+    Cache otherCache = (Cache) o;
+    return getId().equals(otherCache.getId());
+  }
+
+  @Override
+  public int hashCode() {
+    if (getId() == null) {
+      throw new CacheException("Cache instances require an ID.");
+    }
+    return getId().hashCode();
+  }
+
+}
+```
+
+3. **一级缓存的生命周期有多长？**
+
+   - Mybatis在开启一个数据库会话时，会创建一个新的SqlSession对象，SqlSession对象中会有一个新的Executor对象，Executor对象中持有一个新的PerpetualCache对象；**当会话结束时，SqlSession对象及其内部的Executor对象还有PerpetualCache对象也一并释放掉**。
+   - **如果SqlSession调用了close()方法**，会释放掉一级缓存PerpetualCache对象，一级缓存将不可用；
+   - **如果SqlSession调用了clearCache()**，会清空PerpetualCache对象中的数据，但是该对象仍可使用；
+   - **SqlSession中执行了任何一个update操作(update()、delete()、insert()) **，都会清空PerpetualCache对象的数据，但是该对象可以继续使用；
+
+4. ## SqlSession 一级缓存的工作流程
+
+   - 于某个查询，**根据statementId,params,rowBounds来构建一个key值**，根据这个key值去缓存Cache中取出对应的key值存储的缓存结果；
+   - 判断从Cache中根据特定的key值取的数据数据是否为空，即是否命中；
+   - 如果命中，则直接将缓存结果返回；
+   - 如果没命中：
+     - 去数据库中查询数据，得到查询结果；
+     -  将key和查询到的结果分别作为key,value对存储到Cache中；
+     - 将查询结果返回；
+   - 结束。
+
+   ![processOfCache](../../images/mybatis/processOfCache.png)
+
+#### Cache接口的设计以及CacheKey的定义
+
+实际上，**在SqlSession对象里的Executor对象内维护的Cache类型实例对象，就是PerpetualCache子类创建的**。
+
+MyBatis内部还有很多Cache接口的实现，**一级缓存只会涉及到这一个PerpetualCache子类**，Cache的其他实现将会放到二级缓存中介绍。
+
+现在最核心的问题出现了：**怎样来确定一次查询的特征值？换句话说就是：怎样判断某两次查询是完全相同的查询？也可以这样说：如何确定Cache中的key值？**
+
+**获取CacheKey的四个条件：**
+
+1. 传入的statementId,对于Mybatis而言，你要使用它，必须需要一个statementId，它代表你执行什么样的Sql
+2. Mybatis自身提供的分页功能是通过RowBounds来实现的，它通过rowBounds.offset和rowBounds.limit来过滤查询出来的结果集，这种分页功能是基于查询结果的再过滤，而不是进行数据库的物理分页。
+3. 由于Mybatis底层还是依赖JDBC实现的，那么，对于两次完全一模一样的查询，Mybatis要保证对于底层JDBC而言，也是完全一致的查询才行，而对于JDBC而言，**两次查询，只要传入给JDBC的SQL语句完全一致，传入的参数也完全一致**，就认为是两次查询是完全一致的。
+4. 上述的第3个条件正是要求保证传递给JDBC的SQL语句完全一致；第4条则是保证传递给JDBC的参数也完全一致；即3、4两条MyBatis最本质的要求就是：**调用JDBC的时候，传入的SQL语句要完全相同，传递给JDBC的参数值也要完全相同**。
+
+CacheKey由以下条件决定：**statementId + rowBounds + 传递给JDBC的SQL + 传递给JDBC的参数值**；
+
+**CacheKey的创建**：
+
+**CacheKey的构建被放置到了Executor接口的实现类BaseExecutor中，定义如下：**
+
+```java
+public CacheKey createCacheKey(MappedStatement ms, Object parameterObject, RowBounds rowBounds, BoundSql boundSql) {
+  if (closed) {
+    throw new ExecutorException("Executor was closed.");
+  }
+  CacheKey cacheKey = new CacheKey();
+    //1.statementId
+  cacheKey.update(ms.getId());
+    //2.rowBounds.offset
+  cacheKey.update(rowBounds.getOffset());
+    //3.rowBounds.limit
+  cacheKey.update(rowBounds.getLimit());
+    //4. sql语句
+  cacheKey.update(boundSql.getSql());
+    //5.参数
+  List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
+  TypeHandlerRegistry typeHandlerRegistry = ms.getConfiguration().getTypeHandlerRegistry();
+  // mimic DefaultParameterHandler logic
+  for (ParameterMapping parameterMapping : parameterMappings) {
+    if (parameterMapping.getMode() != ParameterMode.OUT) {
+      Object value;
+      String propertyName = parameterMapping.getProperty();
+      if (boundSql.hasAdditionalParameter(propertyName)) {
+        value = boundSql.getAdditionalParameter(propertyName);
+      } else if (parameterObject == null) {
+        value = null;
+      } else if (typeHandlerRegistry.hasTypeHandler(parameterObject.getClass())) {
+        value = parameterObject;
+      } else {
+        MetaObject metaObject = configuration.newMetaObject(parameterObject);
+        value = metaObject.getValue(propertyName);
+      }
+        //将每一个要传递给JDBC的参数值更新到CacheKey中
+      cacheKey.update(value);
+    }
+  }
+  if (configuration.getEnvironment() != null) {
+    // issue #176
+    cacheKey.update(configuration.getEnvironment().getId());
+  }
+  return cacheKey;
+}
+```
+
+**CacheKey的hashcode生成算法**：
+
+**Cache接口的实现，本质上是使用的HashMap,而构建CacheKey的目的就是为了作为HashMap中的key值**。**而HashMap是通过key值的hashcode 来组织和存储的，那么，构建CacheKey的过程实际上就是构造其hashCode的过程**。下面的代码就是CacheKey的核心hashcode生成算法：
+
+```java
+public void update(Object object) {
+  	//1.得到对象的hashCode
+    int baseHashCode = object == null ? 1 : ArrayUtil.hashCode(object);
+	//对象计数器递增
+  count++;
+  checksum += baseHashCode;
+  //2.对象的hashcode过大count倍
+  baseHashCode *= count;
+	//3.hashcode * 拓展因子(默认37) + 拓展扩大后的对象hashcode
+  hashcode = multiplier * hashcode + baseHashCode;
+  updateList.add(object);
+}
+```
+
+MyBatis认为的完全相同的查询，不是指使用sqlSession查询时传递给算起来Session的所有参数值完完全全相同，你只要保证statementId，rowBounds,最后生成的SQL语句，以及这个SQL语句所需要的参数完全一致就可以了。
+
+#### 一级缓存的性能分析
+
+**MyBatis对会话（Session）级别的一级缓存设计的比较简单，就简单地使用了HashMap来维护，并没有对HashMap的容量和大小进行限制**
+
+读者有可能就觉得不妥了：如果我一直使用某一个SqlSession对象查询数据，这样会不会导致HashMap太大，而导致 java.lang.OutOfMemoryError错误啊？读者这么考虑也不无道理，不过MyBatis的确是这样设计的。
+
+**MyBatis这样设计也有它自己的理由：**
+
+a. **一般而言SqlSession的生存时间很短。**一般情况下使用一个SqlSession对象执行的操作不会太多，执行完就会消亡；
+
+b. **对于某一个SqlSession对象而言，只要执行update操作（update、insert、delete），都会将这个SqlSession对象中对应的一级缓存清空掉**，所以一般情况下不会出现缓存过大，影响JVM内存空间的问题；
+
+c. **可以手动地释放掉SqlSession对象中的缓存。**
+
+**一级缓存是一个粗粒度的缓存，没有更新缓存和缓存过期的概念**：
+
+MyBatis的一级缓存就是使用了简单的HashMap，MyBatis只负责将查询数据库的结果存储到缓存中去， 不会去判断缓存存放的时间是否过长、是否过期，因此也就没有对缓存的结果进行更新这一说了。
+
+注意：
+
+1. 对于数据变化频率很大，并且需要高时效准确性的数据要求，我们使用SqlSession查询的时候，**要控制好SqlSession的生存时间，SqlSession的生存时间越长，它其中缓存的数据有可能就越旧，从而造成和真实数据库的误差**；同时对于这种情况，**用户也可以手动地适时清空SqlSession中的缓存**；
+2. 对于只执行、并且频繁执行大范围的select操作的SqlSession对象，SqlSession对象的生存时间不应过长。
+
 
 
 ### 二级缓存
+
+**MyBatis的二级缓存是Application级别的缓存**，它可以提高对数据库查询的效率，以提高应用的性能。
+
+#### MyBatis的缓存机制整体设计以及二级缓存的工作模式
+
+![twoCache](../../images/mybatis/twoCache.png)
+
+如果用户配置了"cacheEnabled=true"，那么MyBatis在为SqlSession对象创建Executor对象时，**会对Executor对象加上一个装饰者：CachingExecutor**，这时SqlSession使用CachingExecutor对象来完成操作请求。**CachingExecutor对于查询请求，会先判断该查询请求在Application级别的二级缓存中是否有缓存结果**，如果有查询结果，则直接返回缓存结果；如果缓存中没有，再交给真正的Executor对象来完成查询操作，**之后CachingExecutor会将真正Executor返回的查询结果放置到缓存中**，然后在返回给用户。
+
+![workModeForTwoCache](../../images/mybatis/workModeForTwoCache.png)
+
+CachingExecutor是Executor的装饰者，以增强Executor的功能，使其具有缓存查询的功能，这里用到了设计模式中的装饰者模式，
+
+#### MyBatis二级缓存的划分
+
+MyBatis并不是简单地对整个Application就只有一个Cache缓存对象，它将缓存划分的更细，**即是Mapper级别的，即每一个Mapper都可以拥有一个Cache对象**，具体如下：
+
+1. **为每一个Mapper分配一个Cache缓存对象（使用节点配置）**
+
+   **MyBatis将Application级别的二级缓存细分到Mapper级别，即对于每一个Mapper.xml,如果在其中使用了 节点，则MyBatis会为这个Mapper创建一个Cache缓存对象**，如下图所示：
+
+   ![mapperCache](../../images/mybatis/mapperCache.png)
+
+   注：**上述的每一个Cache对象，都会有一个自己所属的namespace命名空间，并且会将Mapper的 namespace作为它们的ID；**
+
+2. **多个Mapper共用一个Cache缓存对象（使用节点配置）**
+
+   如果你想让多个Mapper公用一个Cache的话，**你可以使用节点，来指定你的这个Mapper使用到了哪一个Mapper的Cache缓存**。
+
+![mapperRefCache](../../images/mybatis/mapperRefCache.png)
+
+#### 使用二级缓存，必须要具备的条件
+
+MyBatis对二级缓存的支持粒度很细，**它会指定某一条查询语句是否使用二级缓存**。
+
+虽然在Mapper中配置了<cache>,并且为此Mapper分配了Cache对象，**这并不表示我们使用Mapper中定义的查询语句查到的结果都会放置到Cache对象之中**，我们必须指定Mapper中的某条选择语句是否支持缓存，**即如下所示，在 节点中配置useCache="true"，Mapper才会对此Select的查询支持缓存特性，否则，不会对此Select查询，不会经过Cache缓存**。如下所示，Select语句配置了useCache="true"，则表明这条Select语句的查询会使用二级缓存。
+
+```csharp
+<select id="selectByMinSalary" resultMap="BaseResultMap" parameterType="java.util.Map" useCache="true">
+```
+
+**要想使某条Select查询支持二级缓存，你需要保证：**
+
+1. Mybatis支持二级缓存的总开关，全局配置参数cacheEnabled = true;
+2. 该select语句所在的Mapper，配置了<cache>或<cahced-ref>节点，并且有效;
+3. 该select语句的参数useCache=true.
+
+### 一级缓存和二级缓存的使用顺序
+
+请注意，如果你的MyBatis使用了二级缓存，并且你的Mapper和select语句也配置使用了二级缓存，那么**在执行select查询的时候，MyBatis会先从二级缓存中取输入，其次才是一级缓存，即MyBatis查询数据的顺序是：二级缓存 ———> 一级缓存 ——> 数据库**。
+
+## 二级缓存实现的选择
+
+**MyBatis对二级缓存的设计非常灵活，它自己内部实现了一系列的Cache缓存实现类，并提供了各种缓存刷新策略如LRU，FIFO等等**；另外，**MyBatis还允许用户自定义Cache接口实现，用户是需要实现org.apache.ibatis.cache.Cache接口，然后将Cache实现类配置在节点的type属性上即可**；除此之外，MyBatis还支持跟第三方内存缓存库如Memecached的集成，总之，使用MyBatis的二级缓存有三个选择:
+
+1. Mybatis自身提供的缓存实现。
+2. 用户自定义的Cache接口实现。
+3. 跟第三方内存缓存库的集成
+
+## MyBatis自身提供的二级缓存的实现
+
+**MyBatis定义了大量的Cache的装饰器来增强Cache缓存的功能**，如下类图所示。
+
+**对于每个Cache而言，都有一个容量限制，MyBatis各供了各种策略来对Cache缓存的容量进行控制，以及对Cache中的数据进行刷新和置换。MyBatis主要提供了以下几个刷新和置换策略：**
+
+- **LRU：（Least Recently Used),最近最少使用算法**，即如果缓存中容量已经满了，会将缓存中最近最少被使用的缓存记录清除掉，然后添加新的记录
+- **FIFO：（First in first out),先进先出算法**，如果缓存中的容量已经满了，那么会将最先进入缓存中的数据清除掉。
+- **Scheduled：指定时间间隔清空算法**，该算法会以指定的某一个时间间隔将Cache缓存中的数据清空；
+
+![cacheDeclare](../../images/mybatis/cacheDeclare.png)
+
+## 当前MyBatis二级缓存的工作机制
+
+![cache-m](../../images/mybatis/cache-m.png)
+
+MyBatis二级缓存的一个重要特点：**即松散的Cache缓存管理和维护**。
+
+**一个Mapper中定义的增删改查操作只能影响到自己关联的Cache对象。**如上图所示的Mapper namespace1中定义的若干CRUD语句，产生的缓存只会被放置到相应关联的Cache1中，即Mapper namespace2,namespace3,namespace4 中的CRUD的语句不会影响到Cache1。
+
+**对于某些使用了 join连接的查询，如果其关联的表数据发生了更新，join连接的查询由于先前缓存的原因，导致查询结果和真实数据不同步；**
+
+**最理想的解决方案就是：**
+
+**对于某些表执行了更新(update、delete、insert)操作后，如何去清空跟这些表有关联的查询语句所造成的缓存；**这样，就是以很细的粒度管理MyBatis内部的缓存，使得缓存的使用率和准确率都能大大地提升。
+
+
 
 缓存机制：eviction配置缓存机制 flush
 
@@ -1403,6 +1702,321 @@ public void afterPropertiesSet() {
 
 ## Mybatis事务
 
+概述：**创建（create）、提交（commit）、回滚（rollback）、关闭（close）**。
+
+**MyBatis的事务管理分为两种形式：**
+
+1. 使用JDBC的事务管理机制：即利用了java.sql.Connection对象完成对事务的提交，回滚，关闭等。
+2. 使用MANAGED的事务管理机制：这种机制Mybatis自身不会去实现事务管理，而是让程序的容器来实现对事务的管理。
+
+![transaction](../../images/mybatis/transaction.png)
+
+### 事务的配置、创建和使用
+
+1、**事务的配置**
+
+可以使用配置文件制定：
+
+```xml
+<environments default="development">
+    <environment id="development">
+        <!-- 使用jdbc事务管理 -->
+        <transactionManager type="JDBC" />
+         <!-- 使用外接整合的程序来进行事务管理 -->
+          <!--<transactionManager type="MANAGED" />-->
+        <!-- 数据库连接池 -->
+        <dataSource type="POOLED">
+            <property name="driver" value="com.mysql.cj.jdbc.Driver" />
+            <property name="url"
+                      value="jdbc:mysql://localhost:3308/mydb?characterEncoding=utf-8" />
+            <property name="username" value="root" />
+            <property name="password" value="123456" />
+        </dataSource>
+    </environment>
+</environments>
+```
+
+<environment>节点定义了连接某个数据库的信息，**其子节点 的type会决定我们用什么类型的事务管理机制**。
+
+2、**事务工厂的创建**
+
+**MyBatis事务的创建是交给TransactionFactory 事务工厂来创建的**，如果我们将<transactionManager>的type 配置为"JDBC",那么，在MyBatis初始化解析<environment>节点时，会根据type="JDBC"创建一个JdbcTransactionFactory工厂，其源码如下：
+
+```java
+//根据TransactionFactory和DataSource创建一个Environment对象
+private void environmentsElement(XNode context) throws Exception {
+  if (context != null) {
+    if (environment == null) {
+      environment = context.getStringAttribute("default");
+    }
+    for (XNode child : context.getChildren()) {
+      String id = child.getStringAttribute("id");
+      if (isSpecifiedEnvironment(id)) {
+        TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
+        DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
+        DataSource dataSource = dsFactory.getDataSource();
+        Environment.Builder environmentBuilder = new Environment.Builder(id)
+            .transactionFactory(txFactory)
+            .dataSource(dataSource);
+        configuration.setEnvironment(environmentBuilder.build());
+      }
+    }
+  }
+}
+```
+
+```java
+//解析transactionManager节点
+private TransactionFactory transactionManagerElement(XNode context) throws Exception {
+  if (context != null) {
+      
+   //根据节点type类型，创建对于的事务管理TransactionFactory实例
+    String type = context.getStringAttribute("type");
+    Properties props = context.getChildrenAsProperties();
+    TransactionFactory factory = (TransactionFactory) resolveClass(type).getDeclaredConstructor().newInstance();
+    factory.setProperties(props);
+    return factory;
+  }
+  throw new BuilderException("Environment declaration requires a TransactionFactory.");
+}
+```
+
+**Environment表示着一个数据库的连接，生成后的Environment对象会被设置到Configuration实例中**，以供后续的使用。
+
+3、**事务工厂TransactionFactory**
+
+事务工厂Transaction定义了创建Transaction的两个方法：**一个是通过指定的Connection对象创建Transaction，另外是通过数据源DataSource来创建Transaction**。与JDBC 和MANAGED两种Transaction相对应，TransactionFactory有两个对应的实现的子类：
+
+
+
+4、**事务Transaction的创建**
+
+通过事务工厂TransactionFactory很容易获取到Transaction对象实例。我们以JdbcTransaction为例，看一下JdbcTransactionFactory是怎样生成JdbcTransaction的，代码如下：
+
+```java
+public class JdbcTransactionFactory implements TransactionFactory {
+
+  @Override
+  public Transaction newTransaction(Connection conn) {
+    return new JdbcTransaction(conn);
+  }
+
+  @Override
+  public Transaction newTransaction(DataSource ds, TransactionIsolationLevel level, boolean autoCommit) {
+    return new JdbcTransaction(ds, level, autoCommit);
+  }
+}
+```
+
+如上说是，**JdbcTransactionFactory会创建JDBC类型的Transaction，即JdbcTransaction。类似地，ManagedTransactionFactory也会创建ManagedTransaction**。下面我们会分别深入JdbcTranaction 和ManagedTransaction，看它们到底是怎样实现事务管理的。
+
+5、**JdbcTransaction**
+
+**JdbcTransaction直接使用JDBC的提交和回滚事务管理机制。**它依赖与从dataSource中取得的连接connection 来管理transaction 的作用域，connection对象的获取被延迟到调用getConnection()方法。如果autocommit设置为on，开启状态的话，它会忽略commit和rollback。
+
+**就是JdbcTransaction是使用的java.sql.Connection 上的commit和rollback功能**，JdbcTransaction只是相当于对java.sql.Connection事务处理进行了一次包装（wrapper），**Transaction的事务管理都是通过java.sql.Connection实现的**。JdbcTransaction的代码实现如下：
+
+```java
+public class JdbcTransaction implements Transaction {
+
+  private static final Log log = LogFactory.getLog(JdbcTransaction.class);
+
+  protected Connection connection;
+  protected DataSource dataSource;
+  protected TransactionIsolationLevel level;
+  protected boolean autoCommit;
+
+  public JdbcTransaction(DataSource ds, TransactionIsolationLevel desiredLevel, boolean desiredAutoCommit) {
+    dataSource = ds;
+    level = desiredLevel;
+    autoCommit = desiredAutoCommit;
+  }
+
+  public JdbcTransaction(Connection connection) {
+    this.connection = connection;
+  }
+
+  @Override
+  public Connection getConnection() throws SQLException {
+    if (connection == null) {
+      openConnection();
+    }
+    return connection;
+  }
+
+  @Override
+  public void commit() throws SQLException {
+    if (connection != null && !connection.getAutoCommit()) {
+      if (log.isDebugEnabled()) {
+        log.debug("Committing JDBC Connection [" + connection + "]");
+      }
+      connection.commit();
+    }
+  }
+
+  @Override
+  public void rollback() throws SQLException {
+    if (connection != null && !connection.getAutoCommit()) {
+      if (log.isDebugEnabled()) {
+        log.debug("Rolling back JDBC Connection [" + connection + "]");
+      }
+      connection.rollback();
+    }
+  }
+
+  @Override
+  public void close() throws SQLException {
+    if (connection != null) {
+      resetAutoCommit();
+      if (log.isDebugEnabled()) {
+        log.debug("Closing JDBC Connection [" + connection + "]");
+      }
+      connection.close();
+    }
+  }
+
+  protected void setDesiredAutoCommit(boolean desiredAutoCommit) {
+    try {
+      if (connection.getAutoCommit() != desiredAutoCommit) {
+        if (log.isDebugEnabled()) {
+          log.debug("Setting autocommit to " + desiredAutoCommit + " on JDBC Connection [" + connection + "]");
+        }
+        connection.setAutoCommit(desiredAutoCommit);
+      }
+    } catch (SQLException e) {
+      // Only a very poorly implemented driver would fail here,
+      // and there's not much we can do about that.
+      throw new TransactionException("Error configuring AutoCommit.  "
+          + "Your driver may not support getAutoCommit() or setAutoCommit(). "
+          + "Requested setting: " + desiredAutoCommit + ".  Cause: " + e, e);
+    }
+  }
+
+  protected void resetAutoCommit() {
+    try {
+      if (!connection.getAutoCommit()) {
+        // MyBatis does not call commit/rollback on a connection if just selects were performed.
+        // Some databases start transactions with select statements
+        // and they mandate a commit/rollback before closing the connection.
+        // A workaround is setting the autocommit to true before closing the connection.
+        // Sybase throws an exception here.
+        if (log.isDebugEnabled()) {
+          log.debug("Resetting autocommit to true on JDBC Connection [" + connection + "]");
+        }
+        connection.setAutoCommit(true);
+      }
+    } catch (SQLException e) {
+      if (log.isDebugEnabled()) {
+        log.debug("Error resetting autocommit to true "
+            + "before closing the connection.  Cause: " + e);
+      }
+    }
+  }
+
+  protected void openConnection() throws SQLException {
+    if (log.isDebugEnabled()) {
+      log.debug("Opening JDBC Connection");
+    }
+    connection = dataSource.getConnection();
+    if (level != null) {
+      connection.setTransactionIsolation(level.getLevel());
+    }
+    setDesiredAutoCommit(autoCommit);
+  }
+
+  @Override
+  public Integer getTimeout() throws SQLException {
+    return null;
+  }
+
+}
+```
+
+6、**ManagedTransaction**
+
+ManagedTransaction让容器来管理事务Transaction的整个生命周期，意思就是说，**使用ManagedTransaction的commit和rollback功能不会对事务有任何的影响，它什么都不会做，它将事务管理的权利移交给了容器来实现**。看如下Managed的实现代码大家就会一目了然：
+
+```java
+public class ManagedTransaction implements Transaction {
+
+  private static final Log log = LogFactory.getLog(ManagedTransaction.class);
+
+  private DataSource dataSource;
+  private TransactionIsolationLevel level;
+  private Connection connection;
+  private final boolean closeConnection;
+
+  public ManagedTransaction(Connection connection, boolean closeConnection) {
+    this.connection = connection;
+    this.closeConnection = closeConnection;
+  }
+
+  public ManagedTransaction(DataSource ds, TransactionIsolationLevel level, boolean closeConnection) {
+    this.dataSource = ds;
+    this.level = level;
+    this.closeConnection = closeConnection;
+  }
+
+  @Override
+  public Connection getConnection() throws SQLException {
+    if (this.connection == null) {
+      openConnection();
+    }
+    return this.connection;
+  }
+
+  @Override
+  public void commit() throws SQLException {
+    // Does nothing
+  }
+
+  @Override
+  public void rollback() throws SQLException {
+    // Does nothing
+  }
+
+  @Override
+  public void close() throws SQLException {
+    if (this.closeConnection && this.connection != null) {
+      if (log.isDebugEnabled()) {
+        log.debug("Closing JDBC Connection [" + this.connection + "]");
+      }
+      this.connection.close();
+    }
+  }
+
+  protected void openConnection() throws SQLException {
+    if (log.isDebugEnabled()) {
+      log.debug("Opening JDBC Connection");
+    }
+    this.connection = this.dataSource.getConnection();
+    if (this.level != null) {
+      this.connection.setTransactionIsolation(this.level.getLevel());
+    }
+  }
+
+  @Override
+  public Integer getTimeout() throws SQLException {
+    return null;
+  }
+
+}
+```
+
+注意：**如果我们使用MyBatis构建本地程序，即不是WEB程序，若将type设置成"MANAGED"，那么，我们执行的任何update操作，即使我们最后执行了commit操作，数据也不会保留，不会对数据库造成任何影响**。因为我们将MyBatis配置成了“MANAGED”，**即MyBatis自己不管理事务，而我们又是运行的本地程序，没有事务管理功能**，所以对数据库的update操作都是无效的。
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Mybatis日志
 
 日志打印技术
@@ -1436,6 +2050,108 @@ mybatis 选取日志原理：
 ## Mybatis插件
 
 自定义插件：
+
+```java
+/**
+ * type：StatementHandler:拦截的对象，method：拦截的方法是prepare方法，args：传入的参数类型args是，Connection和Integer
+ */
+@Intercepts(@Signature(type = StatementHandler.class,method = "prepare",args = {Connection.class,Integer.class}))
+public class MyPagePlugin implements Interceptor {
+
+    private  String databaseType;
+    private  String pageSqlId;
+
+    public String getDatabaseType() {
+        return databaseType;
+    }
+
+    public void setDatabaseType(String databaseType) {
+        this.databaseType = databaseType;
+    }
+
+    public String getPageSqlId() {
+        return pageSqlId;
+    }
+
+    public void setPageSqlId(String pageSqlId) {
+        this.pageSqlId = pageSqlId;
+    }
+
+    //需要自己实现的逻辑
+    @Override
+    public Object intercept(Invocation invocation) throws Throwable {
+        if(!(invocation.getTarget() instanceof StatementHandler))
+            return null;
+        StatementHandler target = (StatementHandler) invocation.getTarget();
+        //需要拿到StatementHandler对象里面的delegate,再从delegate对象里拿到mappedStatement，然后才能得到对象，
+        // 该方法太麻烦
+        //需要下面方法
+        MetaObject metaObject = MetaObject.forObject(target, SystemMetaObject.DEFAULT_OBJECT_FACTORY, SystemMetaObject.DEFAULT_OBJECT_WRAPPER_FACTORY, new DefaultReflectorFactory());
+        String sqlId  = (String) metaObject.getValue("delegate.mappedStatement.id");
+        //1.判断是否有分页
+        //2.拿到连接
+        //3.预编译SQL语句，拿到绑定的sql语句
+        //4.执行count语句，怎么返回需要执行的count结果呢？ 就是使用 select count(0) from (sqlId(执行的sql语句))
+        //重写sql select * from test limit start ,limit
+        //2.1 如何知道start和limit
+        //2.2 拼接 start 和 limit
+        //2.3 替换原来绑定的sql
+        //
+        if(sqlId.matches(pageSqlId)){
+            ParameterHandler parameterHandler = target.getParameterHandler();
+            //拿到原来的sql
+            String sql = target.getBoundSql().getSql();
+            //sql= select * from  product    select count(0) from (select * from  product) as a
+            //select * from luban_product where name = #{name}
+            //执行一条count语句
+            //拿到数据库连接对象
+            Connection connection = (Connection) invocation.getArgs()[0];
+            String countSql = "select count(0) from ("+ sql+")a";
+            System.out.println(countSql);
+            //重新渲染参数
+            PreparedStatement preparedStatement = connection.prepareStatement(countSql);
+            //条件交给mybatis
+            parameterHandler.setParameters(preparedStatement);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            int count = 0;
+            if (resultSet.next()){
+                count = resultSet.getInt(1);
+            }
+            resultSet.close();
+            preparedStatement.close();
+            Map<String, Object> parameterObject = (Map<String, Object>) parameterHandler.getParameterObject();
+            //limit  page
+            PageUtil pageUtil = (PageUtil) parameterObject.get("page");
+            //limit 1 ,10  十条数据   总共可能有100   count 要的是 后面的100
+            pageUtil.setCount(count);
+            String pageSql = getPageSql(sql, pageUtil);
+            metaObject.setValue("delegate.boundSql.sql",pageSql);
+            System.out.println(pageSql);
+        }
+        return null;
+    }
+    public String getPageSql(String sql,PageUtil pageUtil){
+        if(databaseType.equals("mysql")){
+            return sql+" limit "+pageUtil.getStart()+","+pageUtil.getLimit();
+        }else if(databaseType.equals("oracle")){
+            //拼接oracle的分语句
+        }
+
+        return sql+" limit "+pageUtil.getStart()+","+pageUtil.getLimit();
+    }
+    //需要你返回一个动态代理后的对象  target :StatementHandler
+    @Override
+    public Object plugin(Object target) {
+
+        return Plugin.wrap(target,this);
+    }
+
+    @Override
+    public void setProperties(Properties properties) {
+
+    }
+}
+```
 
 ## Mybatis总结
 
