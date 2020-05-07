@@ -701,6 +701,112 @@ parallelStream不会带来性能提升；如果存在频繁的线程切换反而
 
 5. 当一个 Stream 是并行化的，就不需要再写多线程代码，所有对它的操作会自动并行进行的。
 
+## Map集合
+
+Map是不支持Stream流的，因为map接口没有像collection接口那样，定义了stream方法，但是我们可以对其key，value，entry使用流操作，如果：
+
+`map.keySet().stream,map.values().stream()，map.entrySet().stream`
+
+### forEach:
+
+```java
+Map<Object,Object> map = new HashMap<>();
+for (int i = 0; i < 10; i++) {
+    map.putIfAbsent(i,new BeanA("李斯" + i,i + 10));
+}
+map.forEach((key,value)->{
+    System.out.println(key + " = "  + value.toString());
+});
+```
+
+map对象的转化输出：
+
+```java
+Stream<BeanB> bStream = map.values().stream().map(new Function<BeanA, BeanB>() {
+    @Override
+    public BeanB apply(BeanA beanA) {
+        return new BeanB(beanA.getName(), beanA.getAge());
+    }
+});
+bStream.forEach(System.out::println);
+  Stream<BeanB> beanBStream = map.values().stream().map(beanA -> new BeanB(beanA.getName(), beanA.getAge()));
+        beanBStream.forEach(System.out::println);
+```
+
+### computeIfPresen：
+
+computeIfPresent(),先判断key存在是否存在，存在，才会做处理
+
+```java
+Map<Integer,String> maps = new HashMap<>();
+   for (int i = 0; i <10 ; i++) {
+     maps.put(i,"val" + i);
+}
+//computeIfPresent,当key存在时，才会做相关处理
+//对于可以为3的值，内部会先判断值是否存在，存在，则做value + key 的拼接操作，如果不存在，则不做操作
+maps.computeIfPresent(3,(num,val) ->  val+ num);
+System.out.println(  maps.get(3));
+//如果存在可以为6的数据，则置空，相当于做了删除操作
+maps.computeIfPresent(6,(num,val) ->  null);
+System.out.println(  maps.containsKey(6));
+```
+
+### computeIfAbsent：
+
+computeIfAbsent()，先判断key存在是否存在，不存在，才会做处理
+
+```java
+//computeIfAbsent,当key不存在时，才会做相关处理
+//先判断key为20的之元素是否存在，不存在，则添加
+maps.computeIfAbsent(20,key-> "val" + key);
+System.out.println(maps.containsKey(20));
+//先判断key为20的之元素是否存在，存在，则不做任何处理
+maps.computeIfAbsent(3,key -> "newVal");
+System.out.println(maps.get(3));
+```
+
+### remove(key,value):
+
+只有当key和value都存在且能匹配上时，才能删除该元素。
+
+```java
+System.out.println(maps.get(7));
+maps.remove(7,"val");
+System.out.println(maps.get(7));
+maps.remove(7,"val7");
+System.out.println(maps.containsKey(7));
+//val7
+//val7
+//false
+```
+
+### getOrDefault(key,defaultValue):
+
+根据key获取值，如果存在则返回集合元素的值，如果不存在则返回该defaultValue;
+
+```java
+String existValue = maps.getOrDefault(8, "defaultValue");
+System.out.println(existValue);
+String defaultValue = maps.getOrDefault(12, "defaultValue");
+System.out.println(defaultValue);
+//val8
+//defaultValue
+```
+
+### merge:
+
+```java
+//concat是String类的拼接操作
+//merge方法，会先判断进行合并的key是否存在，不存在，怎会添加元素
+maps.merge(12,"val12",(value,newValue)->value.concat(newValue));
+System.out.println(maps.get(12));
+//merge方法，会先判断进行合并的key是否存在，存在，怎会拼接新旧元素
+maps.merge(12,"concat",(value,newValue)->value.concat(newValue));
+System.out.println(maps.get(12));
+```
+
+
+
 ## Date/Time  API
 
 Java 8通过发布新的Date-Time API (JSR 310)来进一步加强对日期与时间的处理。对日期和时间的操作一直都是Java程序员最痛苦的地方之一，标准的 java.util.Date以及后来的java.util.Calendar一点没有改善这种情况(可以这么说,它们一定程度上更加复杂)。
@@ -811,7 +917,7 @@ public @interface RepeatAnnotation {
 
 ```java
 public class ScheduleService {
-    @Schedule(dayOfWeek = 3,hour = 12)
+    @MySchedule(dayOfWeek = 3,hour = 12)
     public void start(){
         System.out.println("定时运行任务！");
     }
@@ -823,8 +929,8 @@ public class ScheduleService {
 
 ```java
 public class ScheduleService {
-    @Schedule(dayOfWeek = 3,hour = 12)
-    @Schedule(dayOfWeek = 4,hour = 13)
+    @MySchedule(dayOfWeek = 3,hour = 12)
+    @MySchedule(dayOfWeek = 4,hour = 13)
     public void start(){
         System.out.println("定时运行任务！");
     }
@@ -835,13 +941,13 @@ public class ScheduleService {
 储注解(其实就是需要需要数组来存储重复注解),这样就可以解决上面的编译报错问题。
 
 ```java
-@Repeatable(value = Schedule.Schedules.class)
-public @interface Schedule {
+@Repeatable(value = MySchedule.MySchedules.class)
+public @interface MySchedule {
     int dayOfWeek() default 1; //周几？
     int hour() default 0;   //几点？
 
     @interface Schedules{
-        Schedule[] value();
+        MySchedule[] value();
     }
 }
 ```
@@ -856,8 +962,8 @@ public static void main(String[] args) {
         for(Annotation annotation : method.getAnnotations()){
             System.out.println(annotation);
         }
-        //Schedule[] annotationsByType = method.getAnnotationsByType(Schedule.class);
-        for(Schedule s : method.getAnnotationsByType(Schedule.class)){
+        //MySchedule[] annotationsByType = method.getAnnotationsByType(MySchedule.class);
+        for(MySchedule s : method.getAnnotationsByType(MySchedule.class)){
             System.out.println(s.dayOfWeek() + "->" + s.hour());
         }
     } catch (NoSuchMethodException e) {

@@ -1,6 +1,5 @@
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -8,14 +7,14 @@ import java.util.concurrent.TimeUnit;
 
 public class ParameterNames
 {
-    @Schedule()
+    @MySchedule()
     public void test(String str1 ,String str2){
 
     }
-
-   /* public static void main(String[] args) {
+    static class Test{
+         public static void main(String[] args) {
         try {
-            Method method = ParameterNames.class.getMethod("test",String.class,String.class);
+            /*Method method = ParameterNames.class.getMethod("test",String.class,String.class);
             for (Parameter parameter : method.getParameters()) {
                 System.out.println(parameter.getName());
             }
@@ -26,19 +25,39 @@ public class ParameterNames
             //Test[] annotationsByType = method.getAnnotationsByType(Test.Schedules.class);
             for (Schedule schedule : method.getAnnotationsByType(Schedule.class)) {
                 System.out.println(schedule.dayOfWeek() + "->" + schedule.hour());
+            }*/
+            MySchedules mySchedule = ScheduleService.class.getAnnotation(MySchedules.class);
+            System.out.println(mySchedule.value().length);
+
+
+            Method[] methods = ScheduleService.class.getMethods();
+            for (Method method : methods) {
+               // System.out.println(method.getName());
+                if(method.getName().equals("start")){
+                    System.out.println(method.getName());
+                   // method.get
+                    MySchedule schedule = method.getDeclaredAnnotation(MySchedule.class);
+                    for (Annotation annotation :method.getDeclaredAnnotations()) {
+                        System.out.println(annotation);
+                    }
+                }
             }
-          *//*  Method method = ScheduleService.class.getMethod("start");
+
+            Method method = ScheduleService.class.getMethod("start");
             for(Annotation annotation : method.getAnnotations()){
                 System.out.println(annotation);
             }
             //Schedule[] annotationsByType = method.getAnnotationsByType(Schedule.class);
-            for(Schedule s : method.getAnnotationsByType(Schedule.class)){
-                System.out.println(s.dayOfWeek() + "->" + s.hour());
-            }*//*
+           /* for(Annotation s : method.getAnnotations(Schedule.Schedules.class)){
+                System.out.println(s.);
+            }*/
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-    }*/
+    }
+
+    }
+
 
     public static void main(String[] args) {
         ExecutorService executor = Executors.newFixedThreadPool(10);

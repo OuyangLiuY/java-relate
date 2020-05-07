@@ -11,7 +11,7 @@ public class NewFeaturesTest
                 for (Annotation annotation : method.getAnnotations()) {
                     System.out.println(annotation);
                 }
-                for (Schedule s : method.getAnnotationsByType(Schedule.class)) {
+                for (MySchedule s : method.getAnnotationsByType(MySchedule.class)) {
                     System.out.println(s.dayOfWeek() + "|" + s.hour());
                 }
             } catch (NoSuchMethodException e) {
@@ -42,7 +42,7 @@ public class NewFeaturesTest
                 System.out.println(annotation);
             }
             //Schedule[] annotationsByType = method.getAnnotationsByType(Schedule.class);
-            for(Schedule s : method.getAnnotationsByType(Schedule.class)){
+            for(MySchedule s : method.getAnnotationsByType(MySchedule.class)){
                 System.out.println(s.dayOfWeek() + "->" + s.hour());
             }
         } catch (NoSuchMethodException e) {
