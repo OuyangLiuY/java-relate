@@ -1,5 +1,6 @@
 package com.tt.singleton;
 
+
 public class Singleton {
     private volatile static Singleton instance;
     public static Singleton getInstance(){
