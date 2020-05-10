@@ -48,3 +48,13 @@ FactoryBean 和普通Bean有什么区别{
 
 }
 https://blog.csdn.net/java_lyvee/article/details/102499560
+
+
+
+
+
+bean definition
+关于beanDefinition 的第一篇笔记  一共三篇 https://blog.csdn.net/java_lyvee/article/details/102633067
+https://www.processon.com/view/link/5c15e10ae4b0ed122da86303
+
+https://shimo.im/docs/Nj0bcFUy3SYyYnbI/ 《无标题》，可复制链接后用石墨文档 App 或小程序打开

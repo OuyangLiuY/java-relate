@@ -18,6 +18,7 @@
         <module>algorithm</module>
         <module>java-virtual-machine</module>
         <module>JavaNewFeatures</module>
+        <module>proxy</module>
     </modules>
      <build>
         <defaultGoal>install</defaultGoal>
