@@ -9,9 +9,19 @@ import java.util.Arrays;
 
 public class SpringBegin {
 
+    @Test
+    public void springTheory() throws Exception {
+        SpringController springController = new SpringController();
+        Class<? extends SpringController> clazz = springController.getClass();
+        SpringService springService = new SpringService();
+        Field springServiceField = clazz.getDeclaredField("springService");
+        springServiceField.setAccessible(true);
+        springServiceField.set(springController, springService);
+        springController.print();
+    }
 
     @Test
-    public void howToGetSpringTheory() throws Exception{
+    public void springSetDITheory() throws Exception {
         SpringController springController = new SpringController();
         Class<? extends SpringController> clazz = springController.getClass();
         //获取共有的 -> public
@@ -32,46 +42,36 @@ public class SpringBegin {
         Field[] fields = clazz.getDeclaredFields();
         Arrays.stream(fields).forEach(System.out::println);
 
-       Field springServiceField = clazz.getDeclaredField("springService");
+        Field springServiceField = clazz.getDeclaredField("springService");
         springServiceField.setAccessible(true);
-    /*     String name = springServiceField.getName();
-        name = name.substring(0,1).toUpperCase()+name.substring(1);
+        String name = springServiceField.getName();
+        name = name.substring(0, 1).toUpperCase() + name.substring(1);
         System.out.println("get" + name);
         String setMethodName = "set" + name;
         Method method = clazz.getMethod(setMethodName, SpringService.class);
-        method.invoke(springController,springService);*/
+        method.invoke(springController, springService);
+        springController.print();
+    }
 
-  /*      System.out.println(springServiceField.getName());
-
-        springServiceField.set(springController,springService);
-*/
-
-        //System.out.println(springController.getSpringService());
-
-
+    @Test
+    public void springAnnotationDITheory() throws Exception {
+        SpringController springController = new SpringController();
+        Class<? extends SpringController> clazz = springController.getClass();
+        Field springServiceField = clazz.getDeclaredField("springService");
+        springServiceField.setAccessible(true);
         Arrays.stream(clazz.getDeclaredFields()).forEach(field -> {
-
             System.out.println(field.getName());
             Autowired annotation = field.getAnnotation(Autowired.class);
-            if(annotation!=null){
+            if (annotation != null) {
                 Class<?> type = field.getType();
-
                 try {
                     Object instance = type.getConstructor().newInstance();
-
-                    springServiceField.set(springController,instance);
-                } catch (InstantiationException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                } catch (NoSuchMethodException e) {
+                    springServiceField.set(springController, instance);
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                     e.printStackTrace();
                 }
             }
         });
         springController.print();
-        System.out.println();
     }
 }

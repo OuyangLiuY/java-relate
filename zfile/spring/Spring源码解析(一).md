@@ -1,6 +1,203 @@
-# Spring
+# Spring实现原理
 
-IOC DI：？
+## spring使用set注入的原理
+
+注入接口类：
+
+```java
+public class SpringService {
+    
+}
+```
+
+需要注入的Controller类：
+
+```java
+public class SpringController {
+  
+   private SpringService springService;
+    
+   public void setSpringService(SpringService springService) {
+        this.springService = springService;
+    }
+    
+    public SpringService getSpringService() {
+        return springService;
+    }
+    
+    void print(){
+        System.out.println(springService.toString());
+    }
+}
+```
+
+不适用Set的普通注入方式：
+
+```java
+@Test
+public void springTheory() throws Exception{
+    SpringController springController = new SpringController();
+    Class<? extends SpringController> clazz = springController.getClass();
+    SpringService springService = new SpringService();
+    Field springServiceField = clazz.getDeclaredField("springService");
+    springServiceField.setAccessible(true);
+    springServiceField.set(springController,springService);
+    springController.print();
+}
+```
+
+spring的set注入原理：
+
+```java
+@Test
+public void springSetDITheory() throw Exception{
+    SpringController springController = new SpringController();
+    SpringService springService = new SpringService();
+     Class<? extends SpringController> clazz = springController.getClass();
+     Field[] fields = clazz.getDeclaredFields();
+     Arrays.stream(fields).forEach(System.out::println);
+    Field springServiceField = clazz.getDeclaredField("springService");
+    //对于私有属性，需要将其设置为可见
+     springServiceField.setAccessible(true);
+    String name = springServiceField.getName();
+     name = name.substring(0,1).toUpperCase()+name.substring(1);
+    //set的注入原理
+    String setMethodName = "set" + name;
+    Method method = clazz.getMethod(setMethodName,SpringService.class);
+    method.invoke(springController,springService);
+    springController.print();
+}
+```
+
+## spring的注解注入原理：
+
+自定义注解类：
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface Autowired {
+    
+}
+```
+
+controller的注入：
+
+```java
+public class SpringController {
+
+    @Autowired
+    private SpringService springService;
+
+    void print(){
+        System.out.println(springService.toString());
+    }
+}
+```
+
+测试spring注解原理：
+
+```java
+@Test
+public void springAnnotationDITheory() throws Exception {
+    SpringController springController = new SpringController();
+    Class<? extends SpringController> clazz = springController.getClass();
+    Field springServiceField = clazz.getDeclaredField("springService");
+    springServiceField.setAccessible(true);
+    Arrays.stream(clazz.getDeclaredFields()).forEach(field -> {
+        System.out.println(field.getName());
+        Autowired annotation = field.getAnnotation(Autowired.class);
+        if (annotation != null) {
+            Class<?> type = field.getType();
+            try {
+                Object instance = type.getConstructor().newInstance();
+                springServiceField.set(springController, instance);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+        }
+    });
+    springController.print();
+}
+```
+
+
+
+`clazz.getFields();`：
+
+```
+Returns an array containing {@code Field} objects reflecting all the accessible public fields of the class or interface represented by this {@code Class} object.
+```
+
+`clazz.getDeclaredFields();`:
+
+```
+Returns an array of {@code Field} objects reflecting all the fields declared by the class or interface represented by this {@code Class} object. This includes public, protected, default (package) access, and private fields, but excludes inherited fields.
+```
+
+总结：
+
+一切的框架必须考虑可以扩展性，
+
+- 抽象
+- 设计模式：一种可以提高编程的思想
+
+spring给出的扩展：
+
+​	1、在创建容器之前可以做一些事情
+
+​	2、容器初始化之前可以做一些事情
+
+​	3、再不同的阶段发出不同的事情，还可以做些事情
+
+​	4、抽象出各个接口，让你为所欲为
+
+​	5、面向接口编程。
+
+# Spring的上下文?
+
+
+
+
+
+# Spring 容器初始化过程
+
+尝试理解bean的初始化过程架构：
+
+![architecture](../../images/spring/architecture/architecture.png)
+
+
+
+
+
+**总结：架构的设计，保证高内聚，低耦合，扩展性**
+
+如何想在容器实例化的不同阶段做点事情，可以使用观察者模式，每次做完一点事情之后就区找它的观察者是否有实现。
+
+IOC（控制反转）？
+控制反转是从容器的角度在描述，描述完整点：容器控制应用程序，由容器反向的向应用程序注入应用程序所需要的外部资源。
+
+DI（依赖注入）：？
+
+依赖注入是从应用程序的角度在描述，可以把依赖注入描述完整点：应用程序依赖容器创建并注入它所需要的外部资源；
+
+Aop？是运行期增强，
+
+AspectJ:
+
+AspectJ是一个面向切面的框架，它扩展了Java语言。AspectJ定义了AOP语法，所以它有一个专门的[编译器](https://baike.baidu.com/item/编译器)用来生成遵守Java字节编码规范的Class文件。        
+
+
+
+spring中如何实现的？ 层？（BeanPostProcessor）是实现的，运行期增强的
+
+
+
+编译器增强：aspectJ        lombok 
+
+**Spring AOP也是对目标类增强，生成代理类。但是与AspectJ的最大区别在于---Spring AOP的运行时增强，而AspectJ是编译时增强。**
+
+
 
 Spring autowird
 
