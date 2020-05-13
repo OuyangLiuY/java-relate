@@ -24,6 +24,8 @@
             <version>2.4.7</version>
 
         </dependency>
+        <!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core  纤程 lib-->
+
 
         <!--<dependency>
             <groupId>org.scala-lang<`   /groupId>

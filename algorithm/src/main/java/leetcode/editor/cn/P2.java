@@ -32,8 +32,9 @@ public class P2{
  */
 class Solution {
     public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
-
-        return
+       String aaa = "test";
+        ListNode<String> listNode = new ListNode(aaa);
+        return listNode;
     }
 }
 class ListNode<T>{
