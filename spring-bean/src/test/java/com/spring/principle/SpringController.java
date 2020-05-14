@@ -1,4 +1,4 @@
-package com.spring.handle;
+package com.spring.principle;
 
 public class SpringController {
 

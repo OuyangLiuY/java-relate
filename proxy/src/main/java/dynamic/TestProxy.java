@@ -11,6 +11,6 @@ public class TestProxy {
         instance.test("xxxxx");*/
         UserProxy userProxy = new UserProxyImpl();
         UserProxy newInstance = (UserProxy) HandleProxy.getNewInstance(userProxy);
-        newInstance.test("handle proxy");
+        newInstance.test("principle proxy");
     }
 }

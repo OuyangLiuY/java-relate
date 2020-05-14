@@ -14,11 +14,19 @@ public class Test {
 		ac.refresh();*/
 		//ApplicationContext context = new ClassPathXmlApplicationContext("classpath:spring.xml");
 
-		AnnotationConfigApplicationContext ac =
+	/*	AnnotationConfigApplicationContext ac =
 				new AnnotationConfigApplicationContext();
 
 		ac.register(AppConfig.class);
 		ac.refresh();
-		System.out.println(ac.getBean(InterClass.class).getInter());
+		System.out.println(ac.getBean(InterClass.class).getInter());*/
+		//byte short int long
+		//float double
+		//boolean
+		//char
+		//return address
+		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath:spring.xml");
+		Object bean = context.getBean("&interClass");
+		System.out.println(bean);
 	}
 }

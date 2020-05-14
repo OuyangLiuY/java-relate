@@ -156,13 +156,33 @@ spring给出的扩展：
 
 # Spring的上下文?
 
+### 什么是spring的上下文？
 
+spring context是spring执行过程所需的一些数据结构的抽象表达，比如IOC容器的执行，肯定需要一个依赖的上下文，所以spring context就是这个。
+
+### spring context主要包括：
+
+- **DefaultListTableBeanFactory**:
+
+  这个就是常说的IOC容器，其中包括了很多Map，List.Spring帮我们创建的singleon类型的bean就存放在其中一个map中，我们定义的监听器（ApplicationListener）也被放到一个Set集合中。
+
+- **BeanDefinitionRegistry**:
+
+  把一个BeanDefinition放到BeanDefinitionMap中。
+
+- **AnnotationBeanDefinitionReader**:
+
+  针对AnnotationConfigApplicationContext而言。一个BeanDefiniton读取器。
+
+- 扩展点集合：
+
+  存放spring扩展点(主要是BeanFactoryPostProcssor、BeanPostProcessor)接口的List集合。
 
 
 
 # Spring 容器初始化过程
 
-尝试理解bean的初始化过程架构：
+尝试理解 Spring Bean 的初始化过程架构：
 
 ![architecture](../../images/spring/architecture/architecture.png)
 
@@ -174,30 +194,46 @@ spring给出的扩展：
 
 如何想在容器实例化的不同阶段做点事情，可以使用观察者模式，每次做完一点事情之后就区找它的观察者是否有实现。
 
-IOC（控制反转）？
+### spring中一些重要概念
+
+**IOC（控制反转）：**
 控制反转是从容器的角度在描述，描述完整点：容器控制应用程序，由容器反向的向应用程序注入应用程序所需要的外部资源。
 
-DI（依赖注入）：？
+**DI（依赖注入）**：
 
 依赖注入是从应用程序的角度在描述，可以把依赖注入描述完整点：应用程序依赖容器创建并注入它所需要的外部资源；
 
-Aop？是运行期增强，
+**Aop**：是运行期增强，
 
-AspectJ:
+实现原理是：当需要切入的类是接口的话，就使用的是JDK的动态代理实现，如果需要切入的不是接口的时候，使用的是CGLIB的动态代理实现的。
 
-AspectJ是一个面向切面的框架，它扩展了Java语言。AspectJ定义了AOP语法，所以它有一个专门的[编译器](https://baike.baidu.com/item/编译器)用来生成遵守Java字节编码规范的Class文件。        
+**AspectJ:**
 
-
-
-spring中如何实现的？ 层？（BeanPostProcessor）是实现的，运行期增强的
-
-
-
-编译器增强：aspectJ        lombok 
+AspectJ是一个面向切面的框架，它扩展了Java语言。AspectJ定义了AOP语法，所以它有一个专门的编译器用来生成遵守Java字节编码规范的Class文件。        
 
 **Spring AOP也是对目标类增强，生成代理类。但是与AspectJ的最大区别在于---Spring AOP的运行时增强，而AspectJ是编译时增强。**
 
+spring中是在BeanPostProcessor中进行增强的。
 
+### BeanFactory
+
+```java
+public interface BeanFactory {
+	String FACTORY_BEAN_PREFIX = "&";
+}
+```
+
+& :取地址符，如果&BeanFactory就是取出当前对象的地址，而非当前的对象。
+
+## Bean的初始化流程
+
+- 1、经历一堆的XXXAware把bean需要的spring组建调用setXX给bean
+- 2、postProcessBeforeInitialization methods of BeanPostProcessors
+- 3、InitializingBean(spring的类)
+- 4、init-method(用户可能自己实现的)
+- 5、BeanPostProcessor afterXXX
+- 6、DispoableBean（spring的类）
+- 7、Destory-method（销毁方法）
 
 Spring autowird
 
