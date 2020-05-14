@@ -235,6 +235,12 @@ public interface BeanFactory {
 - 6、DispoableBean（spring的类）
 - 7、Destory-method（销毁方法）
 
+
+
+
+
+
+
 Spring autowird
 
 spring注入方式有几种：
@@ -306,3 +312,21 @@ bean definition
 https://www.processon.com/view/link/5c15e10ae4b0ed122da86303
 
 https://shimo.im/docs/Nj0bcFUy3SYyYnbI/ 《无标题》，可复制链接后用石墨文档 App 或小程序打开
+
+
+
+
+
+# BeanDefinition
+
+定义bean的，比如该bean包括什么，属性等等，是bean的抽象。
+
+![BeanDefinition关系图](../../images/spring/BeanDefinition关系图.png)
+
+## RootBeanDefinition
+
+定义通过模板，一般作为父bd出现的，或者真实的bd出现，不能作为子bd出现
+
+## ChildBeanDefinition
+
+为了继承rootbd parent的属性等等。

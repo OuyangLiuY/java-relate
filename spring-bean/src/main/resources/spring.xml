@@ -6,12 +6,13 @@
 	         http://www.springframework.org/schema/beans/spring-beans.xsd
 		 http://www.springframework.org/schema/context
 		 http://www.springframework.org/schema/context/spring-context-4.0.xsd"
-	default-autowire="byName"
+	default-autowire="byType"
 >
 
 
 
 <!--
+default-autowire="byType"
 	<bean id="beanService" class="com.service.BeanService"></bean>
 	<bean id="indexService" class="com.service.IndexService"></bean>
 -->
@@ -30,11 +31,11 @@
 
 	<bean id="interClass" class="com.app.InterClass"></bean>
 	<bean id="interImpl" class="com.service.InterImpl"></bean>
-<!--	<bean id="interImpl2" class="com.service.InterImpl2"></bean>-->
+<!--	<bean autowire-candidate="false" id="interImpl2" class="com.service.InterImpl2"></bean>-->
 
 	<bean id="factory" class="com.app.ZiluBeanFacotry"></bean>
 
 
-	<bean></bean>
+<!--	<bean></bean>-->
 
 </beans>
