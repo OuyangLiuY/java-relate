@@ -1,4 +1,4 @@
-package com.tt.inner;
+package inner;
 
 public class Test
 {

@@ -1,4 +1,4 @@
-package com.tt.singleton;
+package singleton;
 
 public enum SingletonEnum {
 
