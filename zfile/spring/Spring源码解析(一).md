@@ -235,12 +235,6 @@ public interface BeanFactory {
 - 6、DispoableBean（spring的类）
 - 7、Destory-method（销毁方法）
 
-
-
-
-
-
-
 Spring autowird
 
 spring注入方式有几种：
@@ -313,20 +307,443 @@ https://www.processon.com/view/link/5c15e10ae4b0ed122da86303
 
 https://shimo.im/docs/Nj0bcFUy3SYyYnbI/ 《无标题》，可复制链接后用石墨文档 App 或小程序打开
 
-
-
-
-
 # BeanDefinition
-
-定义bean的，比如该bean包括什么，属性等等，是bean的抽象。
-
-![BeanDefinition关系图](../../images/spring/BeanDefinition关系图.png)
 
 ## RootBeanDefinition
 
-定义通过模板，一般作为父bd出现的，或者真实的bd出现，不能作为子bd出现
+用法：
+
+```java
+RootBeanDefinition rootBeanDefinition = new RootBeanDefinition();
+rootBeanDefinition.getPropertyValues().add("name","value");
+```
 
 ## ChildBeanDefinition
 
-为了继承rootbd parent的属性等等。
+```java
+ChildBeanDefinition childBeanDefinition = new ChildBeanDefinition("parentName");
+childBeanDefinition.getParentName();
+```
+
+他的使用必须要有一个传入一个父类bean的parentName名称，
+
+## GenericBeanDefinition
+
+
+
+
+
+## BeanFactoryPostProcessor
+
+```java
+@FunctionalInterface
+public interface BeanFactoryPostProcessor {
+
+   /**
+    * Modify the application context's internal bean factory after its standard
+    * initialization. All bean definitions will have been loaded, but no beans
+    * will have been instantiated yet. This allows for overriding or adding
+    * properties even to eager-initializing beans.
+    * @param beanFactory the bean factory used by the application context
+    * @throws org.springframework.beans.BeansException in case of errors
+    */
+   void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException;
+
+}
+```
+
+**作用： Modify the application context's internal bean factory after its standard initialization。**
+
+**这是bean工厂后置处理器**
+
+BeanFactoryPostProcessor的执行机制：
+
+- 如果直接实现BeanFactoryPostProcessor的类是spring完成扫描类之后（所谓扫描包括把类变成beanDefinition然后put到beanDefinitionMap中），在实例化bean之前执行。即将对象放入单例常量池之前执行。
+- 如果实现的是BeanDefinitionRegistryPostProcessor接口的类，这种也叫bean工厂后置处理器的执行时机是在执行直接实现BeanFactoryPostProcessor的类之前，和对类的扫描，parse，是同期执行。假设我的程序扩展了一个功能，需要在这个时期实现某个功能，则可以实现这个类。
+
+测试
+
+```java
+
+@Component(value = "dx")
+public class DX {
+	public DX(){
+		System.out.println("init DX constructor ");
+	}
+}
+public class DY {
+
+	public DY() {
+		System.out.println("init DY constructor");
+	}
+}
+public class DZ {
+
+	public DZ() {
+		System.out.println("init DZ constructor");
+	}
+}
+@Component
+public class TestBeanFactoryProcessor implements BeanFactoryPostProcessor {
+
+	@Override
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+		//转化成子类
+		DefaultListableBeanFactory defaultlbf = (DefaultListableBeanFactory) beanFactory;
+
+		GenericBeanDefinition gbf = new GenericBeanDefinition();
+		gbf.setBeanClass(DY.class);
+		//将DY类添加进去
+		defaultlbf.registerBeanDefinition("dy",gbf);
+
+
+		BeanDefinition dx = defaultlbf.getBeanDefinition("dx");
+
+		System.out.println(dx);
+
+		dx.setBeanClassName("com.definition.DZ");
+
+	}
+}
+
+public class DefinitionTest {
+	public static void main(String[] args) {
+
+		AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext();
+		ac.register(AppConfig.class);
+		ac.refresh();
+
+		RootBeanDefinition rootBeanDefinition = new RootBeanDefinition();
+		rootBeanDefinition.getPropertyValues().add("name","value");
+		//rootBeanDefinition.
+		ChildBeanDefinition childBeanDefinition = new ChildBeanDefinition("bc");
+	}
+}
+```
+
+输出结果：
+
+init DZ constructor
+init DY constructor
+
+可以看到此时，我将dx的bean替换成对象DZ了。
+
+因此：spring实例化一个bean是和 一个beanDefinition对象所对应的那个类有直接关系，跟我们提供的类并没有直接关系。
+
+Definition执行流程：
+
+![definitionProcess](../../images/spring/definitionProcess.png)
+
+## AnnotatedBeanDefinitionReader
+
+```java
+/**
+ * Convenient adapter for programmatic registration of bean classes.
+ */
+```
+
+作用：可以通过编程的方式动态的注册一个bean对象。
+
+- 主要是动态、显示的注册一个bean，
+- 具备解析这个类的功能，和扫描解析的这个类的功能相同，
+
+应用场景：
+
+- 可以显示、动态注册一个程序员提供的bean；
+
+- 在初始化spring容器的过程中完成了对配置类的注册和解析功能。
+
+  这里可以有了两种写法：
+
+  ```java
+  AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext();
+  ac.register(AppConfig.class);
+  ac.refresh();
+  ```
+
+  ```java
+  AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(AppConfig.class);
+  ```
+
+  对于这两种方法还是有点不同之处的：
+
+  1、第一种是容器初始化之前就可以获取ac对象，
+
+  ​	好处1：这个时候我们可以在容器初始化之前就可以动态注入一个自己的bean，
+
+  ​	好处2：提前得到ac对象，可以来开启或者关闭spring的循环依赖，
+
+  ​	好处3：还可以在程序初始化之前注册自己实例化的BeanDefinition对象
+
+  2、第二种是容器直接初始化完成了，这个过程没法控制。
+
+## ClassPathBeanDefinitionScanner
+
+```java
+/**
+ * A bean definition scanner that detects bean candidates on the classpath,
+ * registering corresponding bean definitions with a given registry ({@code BeanFactory}
+ * or {@code ApplicationContext}).
+ */
+```
+
+ClassPathBeanDefinitionScanner是spring完成扫描的核心类，但是AnnotatedBeanDefinitionReader可以替代他完成相同的注解解析，意思就是通过ClassPathBeanDefinitionScanner扫描出来的类和通过AnnotatedBeanDefinitionReader显示注册的类在spring内部会公用一套相同的解析方法。
+
+例子：
+
+# 问题：
+
+## 为什么@Autowired可以注入AppliactionContext对象？
+
+得到ApplicationContext对象的方法比较多，比如extends WebApplicationObjectSupport也可以获取ApplicationContext对象；
+
+#### 获取AppliationContext的主流方式
+
+**第一种**，在一个bean(注意一定得是bean，被spring容器管理的对象)当中通过@Autowired来注入ApplicationContext对象；代码如下：
+
+```java
+@Component
+public class DY {
+   @Autowired 
+   DX dx;
+   @Autowired
+   ApplicationContext applicationContext;
+   public DY() {
+      System.out.println("init DY constructor");
+   }
+}
+```
+
+**第二种**，通过实现ApplicationContextAware接口来获取AppliationContext对象；
+
+```java
+public class AppConAwareImpl implements ApplicationContextAware {
+
+   private ApplicationContext applicationContext;
+
+   @Override
+   public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+      this.applicationContext = applicationContext;
+
+   }
+   public Object getBean(String name){
+       //5.2.6之后就没有这个方法了。
+      return getApplicationContext().getBean(name);
+   }
+}
+```
+
+#### 为什么需要注入这个ApplicationContext对象呢？
+
+我列举一下官网上说的经典场景吧；
+
+假设类A(单例的)需要注入一个类B（原型的）；如果我们直接写会有问题；
+
+比如你在A类当中的m()方法中返回b，那么无论你调用多少次a.m()；返回的都是同一个b对象；就违背b的原型规则，应该在m方法中每次都返回一个新的b；所以某些场景下b不能直接注入；
+
+```java
+//不正确的写法
+@Component
+public class A{
+	
+	//注意B是原型的  scope=prototype
+	@Autowried;
+	B b;
+	public B m(){
+
+		//直接返回注入进来的b；肯定有问题
+		//返回的永远是A实例化的时候注入的那个bean
+		//违背的B设计成原型的初衷
+		return b；
+	}
+}
+```
+
+```java
+//正确的写法
+@Component
+public class A{
+	@Autowired
+	ApplicationContext applicationContext;
+	public B m(){
+		//每次调用m都是通过spring容器去获取b
+		//如果b是原型，每次拿到的都是原型b
+		B b= applicationContext.getBean("b");
+		return b;
+	}
+}
+```
+
+```
+In most application scenarios, most beans in the container are singletons. When a singleton bean needs to collaborate with another singleton bean or a non-singleton bean needs to collaborate with another non-singleton bean, you typically handle the dependency by defining one bean as a property of the other. A problem arises when the bean lifecycles are different. Suppose singleton bean A needs to use non-singleton (prototype) bean B, perhaps on each method invocation on A. The container creates the singleton bean A only once,and thus only gets one opportunity to set the properties. The container cannot provide bean A with a new instance of bean B every time one is needed.
+//这段文字已经清楚的说明了为什么要使用ApplicationContext注入。
+```
+
+#### 为什么@Autowired能够注入ApplicationContext对象？
+
+完成ApplicationContext的步骤：
+
+1、调用InjectionMetadata.java中的inject方法中的`element.inject(target, beanName, pvs);`方法
+
+```java
+public void inject(Object target, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
+   Collection<InjectedElement> checkedElements = this.checkedElements;
+   Collection<InjectedElement> elementsToIterate =
+         (checkedElements != null ? checkedElements : this.injectedElements);
+   if (!elementsToIterate.isEmpty()) {
+      //便利所有需要注入属性，这里就是DY和applicationContext
+         for (InjectedElement element : elementsToIterate) {
+         if (logger.isTraceEnabled()) {
+            logger.trace("Processing injected element of bean '" + beanName + "': " + element);
+         }
+         element.inject(target, beanName, pvs);
+      }
+   }
+}
+```
+
+2、继续调用inject方法中的`beanFactory.resolveDependency()`方法，
+
+```java
+public Object resolveDependency(DependencyDescriptor descriptor, @Nullable String requestingBeanName,
+      @Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) throws BeansException {
+
+ //...省略
+   else {
+      Object result = getAutowireCandidateResolver().getLazyResolutionProxyIfNecessary(
+            descriptor, requestingBeanName);
+      if (result == null) {
+         result = doResolveDependency(descriptor, requestingBeanName, autowiredBeanNames, typeConverter);
+      }
+      return result;
+   }
+}
+```
+
+3、继续调用改接口方法实现类中的`doResolveDependency(args...);`方法得到ApplicationContext对象，
+
+```java
+@Nullable
+public Object doResolveDependency(DependencyDescriptor descriptor, @Nullable String beanName,
+      @Nullable Set<String> autowiredBeanNames, @Nullable TypeConverter typeConverter) throws BeansException {
+
+   	//...省略
+	//获取的关键
+      Map<String, Object> matchingBeans = findAutowireCandidates(beanName, type, descriptor);
+      if (matchingBeans.isEmpty()) {
+         if (isRequired(descriptor)) {
+            raiseNoMatchingBeanFound(type, descriptor.getResolvableType(), descriptor);
+         }
+         return null;
+      }
+//...省略
+    
+}
+```
+
+4、继续调用该方法中findAutowireCandidate(args...);
+
+```java
+protected Map<String, Object> findAutowireCandidates(
+      @Nullable String beanName, Class<?> requiredType, DependencyDescriptor descriptor) {
+
+   String[] candidateNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
+         this, requiredType, true, descriptor.isEager());
+    //从这里获取当前的bean属性
+   Map<String, Object> result = new LinkedHashMap<>(candidateNames.length);
+   for (Map.Entry<Class<?>, Object> classObjectEntry : this.resolvableDependencies.entrySet()) {
+      Class<?> autowiringType = classObjectEntry.getKey();
+      if (autowiringType.isAssignableFrom(requiredType)) {
+         Object autowiringValue = classObjectEntry.getValue();
+         autowiringValue = AutowireUtils.resolveAutowiringValue(autowiringValue, requiredType);
+         if (requiredType.isInstance(autowiringValue)) {
+            result.put(ObjectUtils.identityToString(autowiringValue), autowiringValue);
+            break;
+         }
+      }
+   }
+//...省略
+}
+```
+
+当代码执行到findAutowireCandidates的时候，传了一个特别重要的参数 `Class requireType`；就是当前注入的属性---也就是ApplicationContext.class。然后便利这个resolvableDependencies:Map对象,接着会把传过来的requireType和遍历出来的autowiringType——当前类型进行比较
+
+![dependencesMap](../../images/spring/dependencesMap.png)
+
+这个Map中存放了四个对象，其中包括ApplicationContext，因此直接从这个map中获取这个对象。
+
+那么这个Map集合是什么呢？
+
+```java
+/** Map from dependency type to corresponding autowired value. */
+private final Map<Class<?>, Object> resolvableDependencies = new ConcurrentHashMap<>(16);
+```
+
+其实就是为了其他地方依赖引用而专门在初始化的过程中缓存起来，以供其他地方使用。
+
+该Map对象提供了确切的调用API是在ConfigurableListableBeanFactory接口中定义的：
+
+```java
+/**
+ * Register a special dependency type with corresponding autowired value.
+ * <p>This is intended for factory/context references that are supposed
+ * to be autowirable but are not defined as beans in the factory:
+ * e.g. a dependency of type ApplicationContext resolved to the
+ * ApplicationContext instance that the bean is living in.
+ * <p>Note: There are no such default types registered in a plain BeanFactory,
+ * not even for the BeanFactory interface itself.
+ * @param dependencyType the dependency type to register. This will typically
+ * be a base interface such as BeanFactory, with extensions of it resolved
+ * as well if declared as an autowiring dependency (e.g. ListableBeanFactory),
+ * as long as the given value actually implements the extended interface.
+ * @param autowiredValue the corresponding autowired value. This may also be an
+ * implementation of the {@link org.springframework.beans.factory.ObjectFactory}
+ * interface, which allows for lazy resolution of the actual target value.
+ */
+void registerResolvableDependency(Class<?> dependencyType, @Nullable Object autowiredValue);
+```
+
+Register a special dependency type with corresponding autowired value. 
+
+意思是注册一个特殊的依赖类型 ---- 使用通用的自动装配值。
+
+也就是说把你有一些通用的对象、可能会被别的bean注入，那么你可以调用这个方法吧这个对象放入到一个map当中，以供其他地方使用。
+
+那么spring是什么时候把这四个对象放到Map当中的呢？ ----就是spring在完成初始化的时候
+
+main方法中调用ac.refresh()方法中，调用prepareBeanFactory(beanFactory)方法,
+
+```java
+protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+
+	//...省略...
+   // BeanFactory interface not registered as resolvable type in a plain factory.
+   // MessageSource registered (and found for autowiring) as a bean.
+   beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
+   beanFactory.registerResolvableDependency(ResourceLoader.class, this);
+   beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
+   beanFactory.registerResolvableDependency(ApplicationContext.class, this);
+	//...省略...
+}
+```
+
+**小总结：注入的普通对象的属性如果是单例，那么spring首先从单例池获取，如果获取到直接实例化的这个Bean，放入单例池中并返回;如果是原型的方式每次注入就是在该对象要使用的时候直接根据beanDefinionMap缓存池中获取，并实例化当前对象。**
+
+
+
+做platone智能合约！ a，a变量，两个合约，对应两个同名变量。两个合约隔离，两个合约可以访问同名变量。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
