@@ -1,6 +1,7 @@
 package entity;
 
 import frame.TankFrame;
+import image.ImageManager;
 import util.Dir;
 
 import java.awt.*;
@@ -8,7 +9,8 @@ import java.awt.*;
 public class Bullet {
     private static final int SPEED = 10;
     int x,y;
-    int width = 10 ,height = 10;
+    public static int width = ImageManager.bulletU.getWidth()
+            ,height = ImageManager.bulletU.getHeight() ;
     Dir dir;
     TankFrame tf;
     boolean live = true;
@@ -21,10 +23,27 @@ public class Bullet {
 
    public void paint(Graphics g){
 
-       Color color = g.getColor();
+       switch (dir){
+           case LEFT:
+              g.drawImage(ImageManager.bulletL,x,y,null);
+               break;
+           case RIGHT:
+               g.drawImage(ImageManager.bulletR,x,y,null);
+               break;
+           case UP:
+               g.drawImage(ImageManager.bulletU,x,y,null);
+               break;
+           case DOWN:
+               g.drawImage(ImageManager.bulletD,x,y,null);
+               break;
+           default:
+               break;
+       }
+
+      /* Color color = g.getColor();
        g.setColor(Color.RED);
        g.fillOval(x,y,width,height);
-       g.setColor(color);
+       g.setColor(color);*/
        move();
    }
 

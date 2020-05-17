@@ -1,6 +1,7 @@
 package entity;
 
 import frame.TankFrame;
+import image.ImageManager;
 import util.Dir;
 
 import java.awt.*;
@@ -13,6 +14,8 @@ public class Tank {
     static final int SPEED = 50;
     TankFrame tankFrame;
     boolean moving = false;
+    public static int width = ImageManager.tankU.getWidth()
+            ,height = ImageManager.tankU.getHeight() ;
 
     public Tank(int x, int y, Dir dir,TankFrame tankFrame) {
         this.x = x;
@@ -22,8 +25,24 @@ public class Tank {
     }
 
     public void paint(Graphics g) {
-
-        g.fillRect(x, y, 50, 50);
+        g.drawImage(ImageManager.tankU,x,y,null);
+        switch (dir){
+            case LEFT:
+                g.drawImage(ImageManager.tankL,x,y,null);
+                break;
+            case RIGHT:
+                g.drawImage(ImageManager.tankR,x,y,null);
+                break;
+            case UP:
+                g.drawImage(ImageManager.tankU,x,y,null);
+                break;
+            case DOWN:
+                g.drawImage(ImageManager.tankD,x,y,null);
+                break;
+            default:
+                break;
+        }
+     //   g.fillRect(x, y, 50, 50);
         move();
 
     }
@@ -43,7 +62,6 @@ public class Tank {
             case DOWN:
                 y += SPEED;
                 break;
-
             default:
                 break;
         }
@@ -66,8 +84,10 @@ public class Tank {
     }
 
     public void fire() {
+        int bulletX = this.x + width/2 - Bullet.width/2 ;
+        int bulletY =  this.y + height/2 - Bullet.height/2;
 
-        tankFrame.bullets.add(new Bullet(this.x,this.y,this.dir,tankFrame));
+        tankFrame.bullets.add(new Bullet(bulletX,bulletY,this.dir,tankFrame));
 
     }
 }
