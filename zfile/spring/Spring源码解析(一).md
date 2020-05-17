@@ -34,7 +34,7 @@ public class SpringController {
 不适用Set的普通注入方式：
 
 ```java
-@Test
+@ImageTest
 public void springTheory() throws Exception{
     SpringController springController = new SpringController();
     Class<? extends SpringController> clazz = springController.getClass();
@@ -49,7 +49,7 @@ public void springTheory() throws Exception{
 spring的set注入原理：
 
 ```java
-@Test
+@ImageTest
 public void springSetDITheory() throw Exception{
     SpringController springController = new SpringController();
     SpringService springService = new SpringService();
@@ -98,7 +98,7 @@ public class SpringController {
 测试spring注解原理：
 
 ```java
-@Test
+@ImageTest
 public void springAnnotationDITheory() throws Exception {
     SpringController springController = new SpringController();
     Class<? extends SpringController> clazz = springController.getClass();
@@ -730,6 +730,20 @@ protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 **小总结：注入的普通对象的属性如果是单例，那么spring首先从单例池获取，如果获取到直接实例化的这个Bean，放入单例池中并返回;如果是原型的方式每次注入就是在该对象要使用的时候直接根据beanDefinionMap缓存池中获取，并实例化当前对象。**
 
 
+
+spring扩展点：
+
+```
+BeanDefinitionRegistryPostProcessor
+```
+
+```
+BeanFactoryPostProcessor
+```
+
+```
+ImportBeanDefinitionRegistrar
+```
 
 做platone智能合约！ a，a变量，两个合约，对应两个同名变量。两个合约隔离，两个合约可以访问同名变量。
 
