@@ -1,8 +1,8 @@
-package frame;
+package tank.util.frame;
 
-import entity.Bullet;
-import entity.Tank;
-import util.Dir;
+import tank.util.entity.Bullet;
+import tank.util.entity.Tank;
+import tank.util.Dir;
 
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -10,7 +10,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class TankFrame extends Frame {

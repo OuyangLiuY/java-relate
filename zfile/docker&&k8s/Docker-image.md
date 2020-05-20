@@ -49,7 +49,7 @@ Dockerfile is nothing but the source code for building Docker images
 
 - Docker can build images automatically by reading the instructions from a Dockerfile
 
-- A Dockerfile is a **text document** that contains all the commands a user could call on the command line to assemble an image
+- A Dockerfile is a **text document** that contains all the commands a user could call on the command line to assemble an tank.util.image
 
   - Using **docker build** users can create an automated build that executes several command-line instructions in succession
 
@@ -120,9 +120,9 @@ FROM指令是最重要的一个并且必须为Dockerfile文件开篇的第一个
 语法：
 
 ```dockerfile
-FROM <image>
-FROM <image>:<tag>
-FROM <image>@<digest>
+FROM <tank.util.image>
+FROM <tank.util.image>:<tag>
+FROM <tank.util.image>@<digest>
 ```
 
 

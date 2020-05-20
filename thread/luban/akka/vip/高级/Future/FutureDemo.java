@@ -47,7 +47,7 @@ public class FutureDemo {
         Future<Object> future = Patterns.ask(ref, "hello future", timeout);
         System.out.println(future);
         try {
-            // Await同步获取响应，如果超时了则会抛出java.util.concurrent.TimeoutException
+            // Await同步获取响应，如果超时了则会抛出java.tank.util.concurrent.TimeoutException
             String replymsg = (String) Await.result(future, timeout.duration());
             System.out.println(replymsg);
 

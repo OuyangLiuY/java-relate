@@ -60,7 +60,7 @@ public class AdvanceAkka {
             Timeout timeout = new Timeout(Duration.create(3, "seconds"));
             Future<Object> future = Patterns.ask(actorRef, "hello future", timeout);
             System.out.println(future);
-            // Await同步获取响应，如果超时了则会抛出java.util.concurrent.TimeoutException
+            // Await同步获取响应，如果超时了则会抛出java.tank.util.concurrent.TimeoutException
             String reply = (String) Await.result(future, timeout.duration());
             System.out.println(reply);
 
@@ -104,7 +104,7 @@ public class AdvanceAkka {
 
                 final Materializer materializer = ActorMaterializer.create(system);
                 responseFuture.thenAccept(response->{
-                    response.entity().getDataBytes().runWith(ProcessBuilder.Sink.foreach(content->{
+                    response.tank.util.entity().getDataBytes().runWith(ProcessBuilder.Sink.foreach(content->{
                         System.out.println(content.utf8String());
                     }), materializer);
                 });

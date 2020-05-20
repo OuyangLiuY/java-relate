@@ -18,7 +18,7 @@ public interface PersonCallback {
 
 在JDK7中其实就已经有一些函数式接口了,比如Runnable、Callable、FileFilter等等。
 
-在JDK8中也增加了很多函数式接口,比如java.util.function包。
+在JDK8中也增加了很多函数式接口,比如java.tank.util.function包。
 
 比如这四个常用的接口:
 
@@ -310,7 +310,7 @@ return Optional.ofNullable(order).map(order1 -> order1.name).orElse(null);
 
 ## Stream
 
-Java8中的Stream是对集合（Collection）对象功能的增强，它专注于对集合对象进行各种非常便利、高效的聚合操作（aggregate operation），或者大批量数据操作（bulk data operation）。Stream API借助 于同样新出现的Lamdba表达式，极大的提高编程效率和程序可读性。同时它提供串行和并行两种模式进行汇聚操作，并发模式能够充分利用多核处理器的优势，使用fork/join并行方式来拆分和加速处理过程，通常编写并行代码很难而且容易出错，但使用Stream API无需编写一行多线程的代码，就可以很方便地写出高性能地并发程序。所以说，Java8中首次出现地java.util.stream是一个函数语言+多核时代综合影响地产物。
+Java8中的Stream是对集合（Collection）对象功能的增强，它专注于对集合对象进行各种非常便利、高效的聚合操作（aggregate operation），或者大批量数据操作（bulk data operation）。Stream API借助 于同样新出现的Lamdba表达式，极大的提高编程效率和程序可读性。同时它提供串行和并行两种模式进行汇聚操作，并发模式能够充分利用多核处理器的优势，使用fork/join并行方式来拆分和加速处理过程，通常编写并行代码很难而且容易出错，但使用Stream API无需编写一行多线程的代码，就可以很方便地写出高性能地并发程序。所以说，Java8中首次出现地java.tank.util.stream是一个函数语言+多核时代综合影响地产物。
 
 在传统地J2EE应用中，Java代码经常不得不依赖于关系型数据库地操作如：取平均值、取最大最小值、取汇总值、或者进行分组等等类似地这些操作。
 
@@ -359,10 +359,10 @@ Stream不是集合元素，它不是数据结构并且不保存数据，它是�
 - 从 BufffferedReader
   - java.io.BufffferedReader.lines()
 - 静态工厂
-  - java.util.stream.IntStream.range()
+  - java.tank.util.stream.IntStream.range()
   - java.nio.fifile.Files.walk()
 - 自己构建
-  - java.util.Spliterator
+  - java.tank.util.Spliterator
 - 其他
   - Random.ints()
   - BitSet.stream()
@@ -448,9 +448,7 @@ Stream<String> stream = Stream.of("a", "b", "c");
 stream.map(String::toUpperCase).forEach(System.out::println);
 ```
 
-这段代码把所有的字母转换为大写。map 生成的是个 1:1 映射，每个输入元素，都按照规则转换成为另外一个元
-
-素。还有一些场景，是一对多映射关系的，这时需要 flflatMap。
+这段代码把所有的字母转换为大写。map 生成的是个 1:1 映射，每个输入元素，都按照规则转换成为另外一个元素。还有一些场景，是一对多映射关系的，这时需要 flatMap。
 
 ```java
          Stream<List<Integer>> inputStream = Stream.of(
@@ -598,7 +596,7 @@ System.out.println(Arrays.stream(nums).noneMatch(integer -> integer< 2));
 
 ### 用Collectors来进行reduction操作
 
-java.util.stream.Collectors 类的主要作用就是辅助进行各类有用的 reduction 操作,例如转变输出为 Collection，把 Stream 元素进行归组。
+java.tank.util.stream.Collectors 类的主要作用就是辅助进行各类有用的 reduction 操作,例如转变输出为 Collection，把 Stream 元素进行归组。
 
 ### groupingBy/PartitioningBy
 
@@ -809,7 +807,7 @@ System.out.println(maps.get(12));
 
 ## Date/Time  API
 
-Java 8通过发布新的Date-Time API (JSR 310)来进一步加强对日期与时间的处理。对日期和时间的操作一直都是Java程序员最痛苦的地方之一，标准的 java.util.Date以及后来的java.util.Calendar一点没有改善这种情况(可以这么说,它们一定程度上更加复杂)。
+Java 8通过发布新的Date-Time API (JSR 310)来进一步加强对日期与时间的处理。对日期和时间的操作一直都是Java程序员最痛苦的地方之一，标准的 java.tank.util.Date以及后来的java.tank.util.Calendar一点没有改善这种情况(可以这么说,它们一定程度上更加复杂)。
 
 这种情况直接导致了Joda-Time——一个可替换标准日期/时间处理且功能非常强大的Java API的诞生。Java 8新
 的Date-Time API (JSR 310)在很大程度上受到Joda-Time的影响,并且吸取了其精髓。

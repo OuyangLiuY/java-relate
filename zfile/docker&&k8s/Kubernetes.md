@@ -408,7 +408,7 @@ kubectl get nodes
 
 ```shell
 #使用kubectl命令创建两个监听8080端口的tomcat pod(Kubernetes运行容器的最小单元)
-kubectl run tomcat --image=tomcat --replicas=2 --port=80
+kubectl run tomcat --tank.util.image=tomcat --replicas=2 --port=80
 
 #查看pod状态
 kubectl get pods

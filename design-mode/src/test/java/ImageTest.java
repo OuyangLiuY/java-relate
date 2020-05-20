@@ -1,15 +1,11 @@
-import image.ImageManager;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Objects;
 
 
 public class ImageTest {

@@ -1,10 +1,6 @@
-package window;
+package tank.util.window;
 
-import frame.TankFrame;
-
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import tank.util.frame.TankFrame;
 
 public class TankMain {
     public static void main(String[] args) throws InterruptedException {

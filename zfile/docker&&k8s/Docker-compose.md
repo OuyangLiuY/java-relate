@@ -222,13 +222,13 @@ services:
 
 ## Docker Compose模板文件常用指令
 
-### image
+### tank.util.image
 
 指定镜像名称或者镜像id，如果该镜像在本地不存在，Compose会尝试pull下来。
 
 示例：
 
-image: java:8
+tank.util.image: java:8
 
 ### build
 
@@ -404,15 +404,15 @@ compose
 version: '3.3'
 services:
   eureka:
-    image: eureka:v1
+    tank.util.image: eureka:v1
     ports:
      - 8080:8080
   user:
-    image: user:v1
+    tank.util.image: user:v1
     ports:
      - 8081:8081
   power:
-    image: power:v1
+    tank.util.image: power:v1
     ports:
      - 8082:8082
 ```

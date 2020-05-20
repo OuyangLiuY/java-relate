@@ -1,4 +1,4 @@
-package image;
+package tank.util.image;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

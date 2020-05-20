@@ -1301,7 +1301,7 @@ MyBatis对二级缓存的支持粒度很细，**它会指定某一条查询语�
 虽然在Mapper中配置了<cache>,并且为此Mapper分配了Cache对象，**这并不表示我们使用Mapper中定义的查询语句查到的结果都会放置到Cache对象之中**，我们必须指定Mapper中的某条选择语句是否支持缓存，**即如下所示，在 节点中配置useCache="true"，Mapper才会对此Select的查询支持缓存特性，否则，不会对此Select查询，不会经过Cache缓存**。如下所示，Select语句配置了useCache="true"，则表明这条Select语句的查询会使用二级缓存。
 
 ```csharp
-<select id="selectByMinSalary" resultMap="BaseResultMap" parameterType="java.util.Map" useCache="true">
+<select id="selectByMinSalary" resultMap="BaseResultMap" parameterType="java.tank.util.Map" useCache="true">
 ```
 
 **要想使某条Select查询支持二级缓存，你需要保证：**
@@ -2157,7 +2157,7 @@ public class MyPagePlugin implements Interceptor {
 
 spring整合mybatis一级缓存失效原因：因为每次调用完dao方法就直接销毁
 
-如果开启了事务，一级缓存就会生效：因为开启了事务，执行完dao就不会销毁，因为一旦销毁i，事务也就销毁了
+如果开启了事务，一级缓存就会生效：因为开启了事务，执行完dao就不会销毁，因为一旦销毁，事务也就销毁了
 
 因为开启了事务，spring是知道你需要什么时候需要结束的。
 

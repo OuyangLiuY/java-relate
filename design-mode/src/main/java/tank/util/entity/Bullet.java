@@ -1,8 +1,8 @@
-package entity;
+package tank.util.entity;
 
-import frame.TankFrame;
-import image.ImageManager;
-import util.Dir;
+import tank.util.frame.TankFrame;
+import tank.util.image.ImageManager;
+import tank.util.Dir;
 
 import java.awt.*;
 
