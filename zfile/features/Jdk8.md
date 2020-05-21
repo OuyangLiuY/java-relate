@@ -1228,19 +1228,16 @@ ExecutorService executor = Executors.newCachedThreadPool();
 Future<Integer> result = executor.submit(new Callable<Integer>() {
 public Integer call() throws Exception {
 int sum=0;
-System.out.println("
-...");
+System.out.println("...");
 for (int i=0; i<100; i++) {
 sum = sum + i;
 }
 Thread.sleep(TimeUnit.SECONDS.toSeconds(3));
-System.out.println("
-");
+System.out.println("");
 return sum;
 }
 });
-System.out.println("
-...");
+System.out.println("...");
 try {
 System.out.println("result:" + result.get());
 } catch (Exception e) {
@@ -1292,7 +1289,7 @@ executor.shutdown();
 CompletableFuture还有很多其他的特性，需要慢慢来学。
 
 ```
-Java8的特性还有Stream和Optional,这两个也是用的特别多的,相信很多同学早有耳闻,并且已经对这两个的特性有所了解,所以本片博客就不进行讲解了,有机会再单独讲解,可讲的内容还是非常之多的对于Java8,新增的特性还是非常之多的,就是目前Java11已经出了,但是Java8中的特性肯定会一直在后续的版本中保留的,至于这篇文章的这些新特性我们估计用的比较少,所以特已此篇来进行一个普及,希望都有所收货。
+Java8的特性还有Stream和Optional,这两个也是用的特别多的,相信很多人早有耳闻,并且已经对这两个的特性有所了解,所以本片博客就不进行讲解了,有机会再单独讲解,可讲的内容还是非常之多的对于Java8,新增的特性还是非常之多的,就是目前Java11已经出了,但是Java8中的特性肯定会一直在后续的版本中保留的,至于这篇文章的这些新特性我们估计用的比较少,所以特已此篇来进行一个普及,希望都有所收货。
 ```
 
 
