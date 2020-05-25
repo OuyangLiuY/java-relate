@@ -259,7 +259,7 @@ int handleClientsWithPendingReadsUsingThreads(void) {
 
 - SETEX key seconds value：
 
-  Set the value and expiration of a key。（设置可以的有效期）
+  Set the value and expiration of a key。（设置key的有效期）
 
 - GETSET key value
 
@@ -492,5 +492,412 @@ BZPOPMAX key [key ...] timeout
 2. 集合操作，并集，交集，可以进行权重/或者聚合，例如：根据score的权重进行并集计算，ZINTERSTORE destination numkeys key [key ...] [WEIGHTS weight] [AGGREGATE SUM|MIN|MAX]
 3. 排序的底层实现是**Skip List（跳跃表）**。
 
-## Redis的进阶使用
+# Redis的进阶使用
+
+## Programming with Redis
+
+[The full list of commands](https://redis.io/commands) implemented by Redis, along with thorough documentation for each of them.
+
+### Pipelining:
+
+Learn how to send multiple commands at once, saving on round trip time.
+
+可建立socket连接跟redis进行通信，命令：
+
+```shell
+printf "ping\nPing\nping\n" | nc localhost 6379
+## 每个命令直接需要换行符\n。window中需要\t\n。
+```
+
+
+
+### Redis Pus/Sub:
+
+Redis is a fast and stable Publish/Subscribe messaging system! Check it out.
+
+### Redis Lua scripting:
+
+Redis 3.2 introduces a native Lua debugger for Redis scripts.
+
+### Debugging Lua scripts:
+
+Redis 3.2 introduces a native Lua debugger for Redis scripts.
+
+### Memory optimization:
+
+Understand how Redis uses RAM and learn some tricks to use less of it.
+
+### Expires:
+
+ Redis allows to set a time to live different for every key so that the key will be automatically removed from the server when it expires.
+
+### Redis as an LRU cache:
+
+How to configure and use Redis as a cache with a fixed amount of memory and auto eviction of keys.
+
+### Redis transactions:
+
+It is possible to group commands together so that they are executed as a single transaction.
+
+### Client side caching:
+
+Starting with version 6 Redis supports server assisted client side caching. This document describes how to use it.
+
+### Mass inertion fo data:
+
+How to add a big amount of pre existing or generated data to a Redis instance in a short time.
+
+### Partitioning:
+
+How to distribute your data among multiple Redis instances.
+
+### Distributed locks:
+
+Implementing a distributed lock manager with Redis.
+
+### Redis keyspace notifications:
+
+Get notifications of keyspace events via Pub/Sub (Redis 2.8 or greater).
+
+### Creating secondary indexes with Redis:
+
+Use Redis data structures to create secondary indexes, composed indexes and traverse graphs.
+
+
+
+## RDB and AOF
+
+RDB:Relation DataBase
+
+是指能够在指定的时间间隔对redis的数据进行快照存储
+
+1. save命令
+
+   save是一个同步操作，当服务器发送save命令请求进行持久化时，服务器会阻塞save命令之后的其他客户端的请求，直到数据同步完成。
+
+   **note:如果数据量大，一般不要在生产环境使用save命令。**
+
+2. bgsave命令
+
+   bgsave是一个异步操作，当执行bgsave命令时，redis服务器主进程会fork一个子进程来数据同，直到子进程执行结束。**Redis服务器在处理bgsave采用子进程进行IO写入，而主进程仍然可以接受其他请求，但fork子进程是同步的，所以fork子进程时，一样不能接受其他请求，所以，如果子进程花费时间太久，bgsave也是阻塞其客户端的请求。**
+
+3. 服务配置自动触发
+
+   ```config
+   # 900s内至少达到一条写命令
+   save 900 1
+   # 300s内至少达至10条写命令
+   save 300 10
+   # 60s内至少达到10000条写命令
+   save 60 10000
+   ```
+
+   通过命令生效：
+
+   ```shell
+   redis-server redis.conf
+   ```
+
+   通过服务器配置文件触发RDB的方式，与bgsave命令类似，达到触发条件时，会forks一个子进程进行数据同步，不过最好不要通过这方式来触发RDB持久化，因为设置触发的时间太短，则容易频繁写入rdb文件，影响服务器性能，时间设置太长则会造成数据丢失。
+
+4. 配置RDB文件
+
+   ```
+   # 是否压缩rdb文件
+   rdbcompression yes
+   
+   # rdb文件的名称
+   dbfilename redis-6379.rdb
+   
+   # rdb文件保存目录
+   dir ~/redis/
+   ```
+
+AOF:Append-Only File
+
+`AOF`持久化方式会记录客户端对服务器的每一次写操作命令，并将这些写操作以`Redis`协议追加保存到以后缀为`aof`文件末尾，在Redis服务器重启时，会加载并运行`aof`文件的命令，以达到恢复数据的目的。
+
+```
+# 默认是每100个执行一次
+auto-aof-rewrite-percentage 100
+# 默认是每增加64M就重新写
+auto-aof-rewrite-min-size 64m
+```
+
+
+
+1. 开启AOF持久化方式
+
+   redis默认不开启AOF持久化方式，可以在配置文件中配置
+
+   ```
+   # 开启aof机制
+   appendonly yes
+   
+   # aof文件名
+   appendfilename "appendonly.aof"
+   
+   # 写入策略,always表示每个写操作都保存到aof文件中,也可以是everysec或no
+   appendfsync always
+   
+   # 默认不重写aof文件
+   no-appendfsync-on-rewrite no
+   
+   # 保存目录
+   dir ~/redis/
+   ```
+
+   
+
+2. 写入策略
+
+   ```
+   appendfsync always
+   # appendfsync everysec
+   # appendfsync no
+   ```
+
+   1. always
+
+      客户端的每一个写操作都保存到aof文件中，这种方法很安全，每个操作都有IO操作，比较慢
+
+   2. everysec
+
+      默认的写入策略，每秒写入一次aof文件，因此，最多可能丢失1s的数据。
+
+   3. no
+
+      redis服务器不负责写入aof，而是交由操作系统来处理什么时候写入aof文件，更快，但是最不安全，不推荐使用。
+
+3. AOF文件重写
+
+         aof文件太大，加载会慢，所以redis支持aof文件的重写，将aof文件重写为一个较小的文件。合并一些操作，或者删除过期key操作等等。
+
+4. 通过redis.conf配置文件中的配置设置是否开启重写，这种方式会在每次fsync时都重写，影响服务器性能，默认no，不推荐使用
+
+         ```
+         # 默认不重写aof文件
+         no-appendfsync-on-rewrite no
+         ```
+    
+         也可以使用bgrewriteaof命令，让服务器进行AOF重写
+    
+         ```
+         # 让服务器异步重写追加aof文件命令
+         > bgrewriteaof
+         ```
+    
+         AOF的重写也是异步操作，如果要写入aof文件，则Redis主进程会forks一个子进程来处理。
+
+5. AOF文件重写的好处
+
+6. AOF文件损坏
+
+   在写入aof日志文件时，如果Redis服务器宕机，则aof日志文件文件会出格式错误，在重启Redis服务器时，Redis服务器会拒绝载入这个aof文件，可以通过以下步骤修复aof并恢复数据。
+
+   1. 备份现在aof文件，以防万一。
+
+   2. 使用redis-check-aof命令修复aof文件，该命令格式如下：
+
+    ```shell
+    # 修复aof日志文件
+    $ redis-check-aof -fix file.aof
+    ```
+
+    3. 重启Redis服务器，加载已经修复的aof文件，恢复数据。
+
+#### RDB优点
+
+   1. 与AOF方式相比，通过rdb文件恢复数据比较快。
+   2. rdb文件非常紧凑，适合于数据备份。
+   3. 通过RDB进行数据备，由于使用子进程生成，所以对Redis服务器性能影响较小。
+
+#### RDB缺点
+
+   1. 如果服务器宕机的话，采用`RDB`的方式会造成某个时段内数据的丢失，比如我们设置10分钟同步一次或5分钟达到1000次写入就同步一次，那么如果还没达到触发条件服务器就死机了，那么这个时间段的数据会丢失。
+   2. 使用save命令会造成服务器阻塞，直接数据同步完成才能接收后续请求。
+   3. 使用bgsave命令在forks子进程时，如果数据量太大，forks的过程也会发生阻塞，另外，forks子进程会耗费内存。
+
+#### AOF优点
+
+   AOF只是追加日志文件，因此对服务器性能影响较小，速度比RDB要快，消耗的内存较少。
+
+#### AOF的缺点
+
+   1. AOF方式生成的日志文件太大，即使通过AFO重写，文件体积仍然很大。
+   2. 恢复速度比RDB慢
+
+### 如何选择：
+
+一般可以使用如下命令开启AOF和RDB混合使用，可以体现出AOF的数据的全，RDB速度的快，它们优点的结合：
+
+```shell
+//默认情况下是no，表示不同时开启aof和rbd同时备份
+aof-use-rdb-preamble yes
+```
+
+# Redis 集群
+
+## 为什么要使用redis集群
+
+单机的问题：
+
+1. 单点故障
+2. 容量有限
+3. 压力
+
+##  解决单节点的一般方案
+
+1、数据根据业务进行拆分
+
+![business](../../images/redis/business.png)
+
+2、以下都是业务没法进行拆分的时候，使用hash+modula方法，将数据分配到对应节点，此时根据取模操作，所以在分布式下影响其扩展性
+
+![redis_modula](../../images/redis/redis_modula.png)
+
+3、 使用random进行redis的分区，对数据进行sharding
+
+4、使用一致性哈希(kemata)进行redis分区，性能较好，可扩展性较好，
+
+![redis_kemata](../../images/redis/redis_kemata.png)
+
+一致性哈希的原理：
+
+![kemata_principle](../../images/redis/kemata_principle.png)
+
+## AKF：
+
+1. 单点故障的解决方案：
+
+   redis 水平扩展 redis-> redis -> redis
+
+   读写分离
+
+X: 全量，镜像
+
+Y：业务功能，每个实例对应不同的功能
+
+Z：优先级，逻辑再拆分
+
+通过AKF一变多，造成的问题：
+
+1.  强一致性
+
+   通过同步方式阻塞进行，数据一致性？
+
+   所有节点阻塞，直到数据全部一致，->
+
+   此时会出现的问题：
+
+   1. 破坏可以用性，
+   2. 想想为什么要一变多，解决可以用性
+
+2. 弱一致性
+
+   通过异步方式：容忍数据丢失一部分
+
+3. 最终一致性：
+
+   通过中间技术，让数据最终一致性
+
+   客户端可能取到不一致的数据
+
+主从复制：
+
+
+
+主备：
+
+因为主做读写，自己又是一个单点，因此需要对主做高可用：自动的故障转移。
+
+
+
+## CAP 原则
+
+1. 一致性（Consistency）
+2. 可用性（Availability）
+3. 分区容错性（Partition tolerance)
+
+CAP原则指的是：这个三个要素最多只能同时实现两点，不可能三者兼顾。
+
+## 搭建集群方案
+
+## Twemproxy
+
+**twemproxy** (pronounced "two-em-proxy"), aka **nutcracker** is a fast and lightweight proxy for [memcached](http://www.memcached.org/) and [redis](http://redis.io/) protocol. It was built primarily to reduce the number of connections to the caching servers on the backend. This, together with protocol pipelining and sharding enables you to horizontally scale your distributed caching architecture.
+
+Tutorials:https://github.com/twitter/twemproxy
+
+### predixy
+
+参考文档：https://github.com/joyieldInc/predixy/blob/master/doc/config_CN.md
+
+
+
+### cluster
+
+redis 安装目录下 utils中cd cluster-redis/cluster-redis
+
+根据当前目录下README来操作。
+
+该模式下的模型：
+
+![redisCluster](../../images/redis/redisCluster.png)
+
+解释：三个主节点，第一步，get k1 ，数据去redis2主节点去找，但是这个数据不在2节点上，这时候直接重定向到例如是3节点上，此时数据就是从3节点上获取的。
+
+# Redis 常见问题
+
+## 击穿
+
+是大量key过期导致的，
+
+![breakdown](../../images/redis/breakdown.png)
+
+当大量请求，如果请求的key为空，setnx，此时获取这个setnx的锁的人 ，去访问数据库，其他人等待这个数据访问成功并返回。此时其他的请求直接从redis中获取并返回，不去访问DB。
+
+使用这种方式的问题：
+
+1.如果第一个去访问的第一个人挂了，此时可以设置锁的过期时间，
+
+2.如果第一去访问数据库的人没挂，但是锁超时了，可以使用多线程一个线程去访问DB，一个线程监控是否取回来，更新锁的时间。
+
+## 穿透
+
+是从业务接收查询的是你系统中根本不存在的数据。
+
+![rift](../../images/redis/rift.png)
+
+可以使用布隆过滤器。它的缺点：
+
+还可以使用布谷鸟过滤器。
+
+## 雪崩
+
+大量的key同时失效，间接造成大量的访问到达DB，
+
+![snowslide](../../images/redis/snowslide.png)
+
+解决办法：
+
+1.种时跟时点性无关性的，**可以设置随机过期时间**
+
+2.种是跟时间有关的：，比如0点大量访问，此时可以在业务上做判读，在0点的时候进行延时(等到高访问时间点进行延时，过了0点再去请求后台)。
+
+
+
+## Redis分布式锁
+
+## 分布式锁
+
+使用setnx做
+
+1.setnx
+
+2.设置过期时间
+
+3.多线程(守护)延长过期
+
+此时可以使用redisson技术。但是zookeeper做分布式锁最好，可靠性，
 
