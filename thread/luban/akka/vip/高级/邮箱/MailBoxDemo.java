@@ -119,7 +119,7 @@ public class MailBoxDemo {
         ActorSystem sys = ActorSystem.create("sys", ConfigFactory.load("mailbox.conf"));
 
 //        ActorRef simpleActor = sys.actorOf(Props.create(SimpleActor.class), "simpleActor");
-//        ActorRef simpleActor = sys.actorOf(Props.create(SimpleActor.class).withMailbox("test-mailbox"), "simpleActor");
+//        ActorRef simpleActor = sys.actorOf(Props.create(SimpleActor.class).withMailbox("collections-mailbox"), "simpleActor");
 //        ActorRef simpleActor = sys.actorOf(Props.create(SimpleActor.class).withMailbox("prio-mailbox"), "simpleActor");
 
 //        Object[] messages = {"王五", "李四", "张三", "小二"};

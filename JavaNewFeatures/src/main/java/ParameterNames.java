@@ -14,7 +14,7 @@ public class ParameterNames
     static class Test{
          public static void main(String[] args) {
         try {
-            /*Method method = ParameterNames.class.getMethod("test",String.class,String.class);
+            /*Method method = ParameterNames.class.getMethod("collections",String.class,String.class);
             for (Parameter parameter : method.getParameters()) {
                 System.out.println(parameter.getName());
             }

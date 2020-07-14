@@ -48,8 +48,8 @@ public class EventStreamDemo {
         ActorRef actorRef = system.actorOf(Props.create(SimpleActor.class));
 //        system.eventStream().subscribe(actorRef, DeadLetter.class);
 //
-//        ActorSelection delayActor = system.actorSelection("test");
-//        delayActor.tell("test", ActorRef.noSender());
+//        ActorSelection delayActor = system.actorSelection("collections");
+//        delayActor.tell("collections", ActorRef.noSender());
 
         system.eventStream().subscribe(actorRef, SuperMessage.class);
         system.eventStream().publish(new MessageA());

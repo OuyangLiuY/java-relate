@@ -55,7 +55,7 @@ public class MyPagePlugin implements Interceptor {
         //2.拿到连接
         //3.预编译SQL语句，拿到绑定的sql语句
         //4.执行count语句，怎么返回需要执行的count结果呢？ 就是使用 select count(0) from (sqlId(执行的sql语句))
-        //重写sql select * from test limit start ,limit
+        //重写sql select * from collections limit start ,limit
         //2.1 如何知道start和limit
         //2.2 拼接 start 和 limit
         //2.3 替换原来绑定的sql

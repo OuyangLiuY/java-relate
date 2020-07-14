@@ -1,11 +1,11 @@
 package com;
 
-import sun.misc.Contended;
+//import sun.misc.Contended;
 
 public class T02_Contended {
-    @Contended
+    //@Contended
     long a = 0L;
-    @Contended
+   // @Contended
     long b = 0L;
 
     public static void main(String[] args) throws InterruptedException {

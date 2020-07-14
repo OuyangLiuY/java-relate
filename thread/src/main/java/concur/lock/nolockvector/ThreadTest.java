@@ -62,23 +62,23 @@ public class ThreadTest   {
 
         /*threads[1] = new Thread() {
             public void run(){
-                test.writeVector();
+                collections.writeVector();
             }
         };
         threads[4] = new Thread() {
             public void run(){
-                test.readVector();
+                collections.readVector();
             }
         };
 
         threads[2] = new Thread() {
             public void run(){
-                test.writeList();
+                collections.writeList();
             }
         };
         threads[5] = new Thread() {
             public void run(){
-                test.readList();
+                collections.readList();
             }
         };*/
         /*threads[6] = new Thread() {

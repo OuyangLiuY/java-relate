@@ -700,7 +700,7 @@ getBoundSql方法是将原生sql根据设置的参数替换成数据库可以识
 
 ```java
 public BoundSql getBoundSql(Object parameterObject) {
-    //获取sql原生语句如：select * from test where id = ? 对象，该对象包括参数list，和参数hashmap对应的值
+    //获取sql原生语句如：select * from collections where id = ? 对象，该对象包括参数list，和参数hashmap对应的值
   BoundSql boundSql = sqlSource.getBoundSql(parameterObject);
   List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
   if (parameterMappings == null || parameterMappings.isEmpty()) {
@@ -2092,7 +2092,7 @@ public class MyPagePlugin implements Interceptor {
         //2.拿到连接
         //3.预编译SQL语句，拿到绑定的sql语句
         //4.执行count语句，怎么返回需要执行的count结果呢？ 就是使用 select count(0) from (sqlId(执行的sql语句))
-        //重写sql select * from test limit start ,limit
+        //重写sql select * from collections limit start ,limit
         //2.1 如何知道start和limit
         //2.2 拼接 start 和 limit
         //2.3 替换原来绑定的sql
@@ -2155,7 +2155,7 @@ public class MyPagePlugin implements Interceptor {
 
 ## Mybatis总结
 
-spring整合mybatis一级缓存失效原因：因为每次调用完dao方法就直接销毁
+1.spring整合mybatis一级缓存失效原因：因为每次调用完dao方法就直接销毁
 
 如果开启了事务，一级缓存就会生效：因为开启了事务，执行完dao就不会销毁，因为一旦销毁，事务也就销毁了
 
@@ -2167,8 +2167,9 @@ spring整合mybatis一级缓存失效原因：因为每次调用完dao方法就�
 
 ​	二级缓存是基于命令空间来的
 
-​	是最好
-
-
-
 当你项目中会有多个命名空间操作同一个表时，最好不要用二级缓存。
+
+参考链接：
+
+https://blog.csdn.net/luanlouis
+

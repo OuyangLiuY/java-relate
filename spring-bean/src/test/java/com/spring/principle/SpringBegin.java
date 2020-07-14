@@ -51,6 +51,7 @@ public class SpringBegin {
         Method method = clazz.getMethod(setMethodName, SpringService.class);
         method.invoke(springController, springService);
         springController.print();
+        //springController.
     }
 
     @Test

@@ -38,7 +38,7 @@ public class Test {
 		genericBeanDefinition.setScope("single");
 
 		RootBeanDefinition rootBeanDefinition =new RootBeanDefinition();
-		rootBeanDefinition.getPropertyValues().add("name","test");
+		rootBeanDefinition.getPropertyValues().add("name","collections");
 		rootBeanDefinition.setBeanClass(BeanService.class);
 
 		ac.registerBeanDefinition("beanName",rootBeanDefinition);

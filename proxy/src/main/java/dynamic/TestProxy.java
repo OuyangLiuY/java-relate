@@ -8,7 +8,7 @@ import java.net.Proxy;
 public class TestProxy {
     public static void main(String[] args) {
        /* UserProxy instance = (UserProxy) ProxyIns.getNewInstance(UserProxyImpl.class);
-        instance.test("xxxxx");*/
+        instance.collections("xxxxx");*/
         UserProxy userProxy = new UserProxyImpl();
         UserProxy newInstance = (UserProxy) HandleProxy.getNewInstance(userProxy);
         newInstance.test("principle proxy");

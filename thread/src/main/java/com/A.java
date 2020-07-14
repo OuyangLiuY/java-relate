@@ -1,12 +1,12 @@
 package com;
 
 
-import sun.misc.Contended;
+//import sun.misc.Contended;
 
 public class A {
 
    // @Contended
-    @Contended
+   // @Contended
     static long aa = 110L;
 
     public static void main(String[] args) {

@@ -276,7 +276,9 @@ public static ExecutorService newSingleThreadExecutor() {
 }
 ```
 
-### newScheduleThreadPool(int corePoolSize):
+
+
+### newScheduledThreadExecutor(int corePoolSize):
 
 ```java
 public ScheduledThreadPoolExecutor(int corePoolSize) {
