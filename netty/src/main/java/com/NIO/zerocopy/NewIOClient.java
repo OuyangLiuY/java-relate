@@ -17,8 +17,6 @@ public class NewIOClient {
         //在windows 下一次调用transferTo 只能发送8M数据,就需要分段传输文件,
        //transferTo 底层使用的是零拷贝
         long transfer = fileChannel.transferTo(0, fileChannel.size(), socketChannel);
-
         System.out.println("发送的总的字节数 = " + transfer + ",耗时 : " + (System.currentTimeMillis() - startTime));
-
     }
 }

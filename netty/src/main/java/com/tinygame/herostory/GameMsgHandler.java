@@ -7,7 +7,7 @@ import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 
 public class GameMsgHandler extends SimpleChannelInboundHandler<Object> {
     @Override
-    protected void messageReceived(ChannelHandlerContext msg, Object o) throws Exception {
+    protected void channelRead0(ChannelHandlerContext msg, Object o) throws Exception {
 
         System.out.println("客户端的消息： msg = " + msg);
 
