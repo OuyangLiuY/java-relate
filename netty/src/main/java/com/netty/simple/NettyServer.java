@@ -35,7 +35,7 @@ public class NettyServer {
            System.out.println("服务器 is ready .....");
            //绑定一个对象并同步,生成一个ChannelFuture对象
            //启动服务器(并绑定端口)
-           ChannelFuture cf = bootstrap.bind(6668).sync();
+           ChannelFuture cf = bootstrap.bind(7000).sync();
            //对关闭通道进行监听
            cf.channel().closeFuture().sync();
        }finally {
