@@ -262,17 +262,16 @@ public static byte[] generateProxyClass(final String var0, Class<?>[] var1, int 
 
 下面来看看真正用于生成代理类字节码文件的generateClassFile方法:
 
+```java
 private byte[] generateClassFile() {
         //下面一系列的addProxyMethod方法是将接口中的方法和Object中的方法添加到代理方法中(proxyMethod)
         this.addProxyMethod(hashCodeMethod, Object.class);
         this.addProxyMethod(equalsMethod, Object.class);
         this.addProxyMethod(toStringMethod, Object.class);
         Class[] var1 = this.interfaces;
-        int var2 = var1.length;
-
-```java
-    int var3;
-    Class var4;
+        int var2 = var1.length;   
+		int var3;
+    	Class var4;
    //获得接口中所有方法并添加到代理方法中
     for(var3 = 0; var3 < var2; ++var3) {
         var4 = var1[var3];
@@ -381,4 +380,408 @@ private byte[] generateClassFile() {
     }
 }
 ```
-https://juejin.im/post/6844903998080679949#heading-4
+### 代理类的方法调用
+
+下面是将接口与Object中一些方法添加到代理类中的addProxyMethod方法：
+
+```java
+private void addProxyMethod(Method var1, Class<?> var2) {
+    String var3 = var1.getName(); //获得方法名称
+    Class[] var4 = var1.getParameterTypes(); //获得方法参数类型
+    Class var5 = var1.getReturnType();//获得方法返回类型
+    Class[] var6 = var1.getExceptionTypes();//异常类
+    String var7 = var3 + getParameterDescriptors(var4);//获得方法签名
+    Object var8 = (List)this.proxyMethods.get(var7);//根据方法前面获得proxyMethod的value
+    if (var8 != null) { //处理多个代理接口中方法重复的情况
+        Iterator var9 = ((List)var8).iterator();
+
+        while(var9.hasNext()) {
+            ProxyGenerator.ProxyMethod var10 = (ProxyGenerator.ProxyMethod)var9.next();
+            if (var5 == var10.returnType) {
+                ArrayList var11 = new ArrayList();
+                collectCompatibleTypes(var6, var10.exceptionTypes, var11);
+                collectCompatibleTypes(var10.exceptionTypes, var6, var11);
+                var10.exceptionTypes = new Class[var11.size()];
+                var10.exceptionTypes = (Class[])var11.toArray(var10.exceptionTypes);
+                return;
+            }
+        }
+    } else {
+        var8 = new ArrayList(3);
+        this.proxyMethods.put(var7, var8);
+    }
+
+    ((List)var8).add(new ProxyGenerator.ProxyMethod(var3, var4, var5, var6, var2));
+}
+```
+
+这就是最终真正的代理类，它继承自Proxy并实现了我们定义的Subject接口。我们通过
+
+```java
+HelloInterface hello = (HelloInterface ) Proxy.newProxyInstance(loader, interfaces, handler);
+hello.hello("Tom");
+//实际上就是执行上面类的相应方法，也就是：
+public final void hello(String paramString)
+  {
+    try
+    {
+      this.h.invoke(this, m3, new Object[] { paramString });
+      //就是调用我们自定义的InvocationHandlerImpl的 invoke方法：
+      return;
+    }
+    catch (Error|RuntimeException localError)
+    {
+      throw localError;
+    }
+    catch (Throwable localThrowable)
+    {
+      throw new UndeclaredThrowableException(localThrowable);
+    }
+  }
+//注意这里的this.h.invoke中的h，它是类Proxy中的一个属性
+ protected InvocationHandler h;
+//因为这个代理类继承了Proxy，所以也就继承了这个属性，而这个属性值就是我们定义的
+    InvocationHandler handler = new InvocationHandlerImpl(hello);
+//同时我们还发现，invoke方法的第一参数在底层调用的时候传入的是this，也就是最终生成的代理对象ProxySubject，这是JVM自己动态生成的，而不是我们自己定义的代理对象。
+```
+
+## 深入理解CGLIB动态代理机制
+
+**Cglib是什么?**
+
+Cglib是一个强大的,高性能的代码生成包,它广泛被许多AOP框架使用,为他们提供方法的拦截,
+
+![cglib](../../images/netty/cglib.png)
+
+对此图总结一下：
+
+- 最底层的是字节码Bytecode,字节码是Java为了保证“一次编译、到处运行”而产生的一种虚拟指令格式，例如iload*0、iconst*1、if_icmpne、dup等
+- 位于字节码之上的是ASM，这是一种直接操作字节码的框架，应用ASM需要对Java字节码、Class结构比较熟悉
+- 位于ASM之上的是CGLIB、Groovy、BeanShell，后两种并不是Java体系中的内容而是脚本语言，它们通过ASM框架生成字节码变相执行Java代码，这说明在JVM中执行程序并不一定非要写Java代码----只要你能生成Java字节码，JVM并不关心字节码的来源，当然通过Java代码生成的JVM字节码是通过编译器直接生成的，算是最“正统”的JVM字节码
+- 位于CGLIB、Groovy、BeanShell之上的就是Hibernate、Spring AOP这些框架了，这一层大家都比较熟悉
+- 最上层的是Applications，即具体应用，一般都是一个Web项目或者本地跑一个程序
+
+本文是基于CGLIB 3.1进行探究的
+
+cglib is a powerful, high performance and quality Code Generation Library, It is used to extend JAVA classes and implements interfaces at runtime.
+
+在Spring AOP中，通常会用它来生成AopProxy对象。不仅如此，在Hibernate中PO(Persistant Object 持久化对象)字节码的生成工作也要靠它来完成。
+
+本文将深入探究CGLIB动态代理的实现机制，配合下面这篇文章一起食用口味更佳：[深入理解JDK动态代理机制](https://www.jianshu.com/p/471c80a7e831)
+
+### CGLIB动态代理示例
+
+下面由一个简单的示例开始我们对CGLIB动态代理的介绍：
+
+```
+ <dependency>
+    <groupId>cglib</groupId>
+     <artifactId>cglib</artifactId>
+    <version>3.3.0</version>
+</dependency>
+```
+
+实现MethodInterceptor接口生成方法拦截器:
+
+```java
+public class HelloImpl implements Hello{
+    @Override
+    public String hello(String msg) {
+        System.out.println("HelloImpl.hello =  " + msg);
+        return null;
+    }
+}
+public class HelloMethodInterceptor implements MethodInterceptor {
+    @Override
+    public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+        System.out.println("before = " + method.getName());
+        Object obj = methodProxy.invokeSuper(o, objects);
+        System.out.println("after = " + method.getName());
+        return obj;
+    }
+}
+
+
+public class client {
+    public static void main(String[] args) {
+        Enhancer enhancer = new Enhancer();
+        enhancer.setSuperclass(HelloImpl.class);
+        enhancer.setCallback(new HelloMethodInterceptor());
+        HelloImpl hello = (HelloImpl) enhancer.create();
+        hello.hello("这是cglib的测试");
+    }
+}
+/* 输出结果:
+ * before = hello
+ * HelloImpl.hello =  这是cglib的测试
+ * after = hello
+ */
+```
+
+**JDK代理要求被代理的类必须实现接口，有很强的局限性。而CGLIB动态代理则没有此类强制性要求。简单的说，CGLIB会让生成的代理类继承被代理类，并在代理类中对代理方法进行强化处理(前置处理、后置处理等)。在CGLIB底层，其实是借助了ASM这个非常强大的Java字节码生成框架。**
+
+### 生成代理类对象
+
+从图1.3中我们看到，代理类对象是由Enhancer类创建的。Enhancer是CGLIB的字节码增强器，可以很方便的对类进行拓展，如图1.3中的为类设置Superclass。
+
+创建代理对象的几个步骤:
+
+- 生成代理类的二进制字节码文件；
+- 加载二进制字节码，生成Class对象( 例如使用Class.forName()方法 )；
+- 通过反射机制获得实例构造，并创建代理类对象
+
+我们来看看将代理类Class文件反编译之后的Java代码
+
+```java
+package proxy;
+
+import java.lang.reflect.Method;
+import net.sf.cglib.core.ReflectUtils;
+import net.sf.cglib.core.Signature;
+import net.sf.cglib.proxy.Callback;
+import net.sf.cglib.proxy.Factory;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
+
+public class HelloServiceImpl$EnhancerByCGLIB$82ef2d06
+  extends HelloServiceImpl
+  implements Factory
+{
+  private boolean CGLIB$BOUND;
+  private static final ThreadLocal CGLIB$THREAD_CALLBACKS;
+  private static final Callback[] CGLIB$STATIC_CALLBACKS;
+  private MethodInterceptor CGLIB$CALLBACK_0;
+  private static final Method CGLIB$sayHello$0$Method;
+  private static final MethodProxy CGLIB$sayHello$0$Proxy;
+  private static final Object[] CGLIB$emptyArgs;
+  private static final Method CGLIB$finalize$1$Method;
+  private static final MethodProxy CGLIB$finalize$1$Proxy;
+  private static final Method CGLIB$equals$2$Method;
+  private static final MethodProxy CGLIB$equals$2$Proxy;
+  private static final Method CGLIB$toString$3$Method;
+  private static final MethodProxy CGLIB$toString$3$Proxy;
+  private static final Method CGLIB$hashCode$4$Method;
+  private static final MethodProxy CGLIB$hashCode$4$Proxy;
+  private static final Method CGLIB$clone$5$Method;
+  private static final MethodProxy CGLIB$clone$5$Proxy;
+
+  static void CGLIB$STATICHOOK1()
+  {
+    CGLIB$THREAD_CALLBACKS = new ThreadLocal();
+    CGLIB$emptyArgs = new Object[0];
+    Class localClass1 = Class.forName("proxy.HelloServiceImpl$EnhancerByCGLIB$82ef2d06");
+    Class localClass2;
+    Method[] tmp95_92 = ReflectUtils.findMethods(new String[] { "finalize", "()V", "equals", "(Ljava/lang/Object;)Z", "toString", "()Ljava/lang/String;", "hashCode", "()I", "clone", "()Ljava/lang/Object;" }, (localClass2 = Class.forName("java.lang.Object")).getDeclaredMethods());
+    CGLIB$finalize$1$Method = tmp95_92[0];
+    CGLIB$finalize$1$Proxy = MethodProxy.create(localClass2, localClass1, "()V", "finalize", "CGLIB$finalize$1");
+    Method[] tmp115_95 = tmp95_92;
+    CGLIB$equals$2$Method = tmp115_95[1];
+    CGLIB$equals$2$Proxy = MethodProxy.create(localClass2, localClass1, "(Ljava/lang/Object;)Z", "equals", "CGLIB$equals$2");
+    Method[] tmp135_115 = tmp115_95;
+    CGLIB$toString$3$Method = tmp135_115[2];
+    CGLIB$toString$3$Proxy = MethodProxy.create(localClass2, localClass1, "()Ljava/lang/String;", "toString", "CGLIB$toString$3");
+    Method[] tmp155_135 = tmp135_115;
+    CGLIB$hashCode$4$Method = tmp155_135[3];
+    CGLIB$hashCode$4$Proxy = MethodProxy.create(localClass2, localClass1, "()I", "hashCode", "CGLIB$hashCode$4");
+    Method[] tmp175_155 = tmp155_135;
+    CGLIB$clone$5$Method = tmp175_155[4];
+    CGLIB$clone$5$Proxy = MethodProxy.create(localClass2, localClass1, "()Ljava/lang/Object;", "clone", "CGLIB$clone$5");
+    tmp175_155;
+    Method[] tmp223_220 = ReflectUtils.findMethods(new String[] { "sayHello", "()V" }, (localClass2 = Class.forName("proxy.HelloServiceImpl")).getDeclaredMethods());
+    CGLIB$sayHello$0$Method = tmp223_220[0];
+    CGLIB$sayHello$0$Proxy = MethodProxy.create(localClass2, localClass1, "()V", "sayHello", "CGLIB$sayHello$0");
+    tmp223_220;
+    return;
+  }
+
+  final void CGLIB$sayHello$0()
+  {
+    super.sayHello();
+  }
+
+  public final void sayHello()
+  {
+    MethodInterceptor tmp4_1 = this.CGLIB$CALLBACK_0;
+    if (tmp4_1 == null)
+    {
+      tmp4_1;
+      CGLIB$BIND_CALLBACKS(this);
+    }
+    if (this.CGLIB$CALLBACK_0 != null) {
+      return;
+    }
+    super.sayHello();
+  }
+
+  final void CGLIB$finalize$1()
+    throws Throwable
+  {
+    super.finalize();
+  }
+
+  protected final void finalize()
+    throws Throwable
+  {
+    MethodInterceptor tmp4_1 = this.CGLIB$CALLBACK_0;
+    if (tmp4_1 == null)
+    {
+      tmp4_1;
+      CGLIB$BIND_CALLBACKS(this);
+    }
+    if (this.CGLIB$CALLBACK_0 != null) {
+      return;
+    }
+    super.finalize();
+  }
+
+  final boolean CGLIB$equals$2(Object paramObject)
+  {
+    return super.equals(paramObject);
+  }
+
+  public final boolean equals(Object paramObject)
+  {
+    MethodInterceptor tmp4_1 = this.CGLIB$CALLBACK_0;
+    if (tmp4_1 == null)
+    {
+      tmp4_1;
+      CGLIB$BIND_CALLBACKS(this);
+    }
+    MethodInterceptor tmp17_14 = this.CGLIB$CALLBACK_0;
+    if (tmp17_14 != null)
+    {
+      Object tmp41_36 = tmp17_14.intercept(this, CGLIB$equals$2$Method, new Object[] { paramObject }, CGLIB$equals$2$Proxy);
+      tmp41_36;
+      return tmp41_36 == null ? false : ((Boolean)tmp41_36).booleanValue();
+    }
+    return super.equals(paramObject);
+  }
+
+  final String CGLIB$toString$3()
+  {
+    return super.toString();
+  }
+
+  public final String toString()
+  {
+    MethodInterceptor tmp4_1 = this.CGLIB$CALLBACK_0;
+    if (tmp4_1 == null)
+    {
+      tmp4_1;
+      CGLIB$BIND_CALLBACKS(this);
+    }
+    MethodInterceptor tmp17_14 = this.CGLIB$CALLBACK_0;
+    if (tmp17_14 != null) {
+      return (String)tmp17_14.intercept(this, CGLIB$toString$3$Method, CGLIB$emptyArgs, CGLIB$toString$3$Proxy);
+    }
+    return super.toString();
+  }
+
+  final int CGLIB$hashCode$4()
+  {
+    return super.hashCode();
+  }
+
+  public final int hashCode()
+  {
+    MethodInterceptor tmp4_1 = this.CGLIB$CALLBACK_0;
+    if (tmp4_1 == null)
+    {
+      tmp4_1;
+      CGLIB$BIND_CALLBACKS(this);
+    }
+    MethodInterceptor tmp17_14 = this.CGLIB$CALLBACK_0;
+    if (tmp17_14 != null)
+    {
+      Object tmp36_31 = tmp17_14.intercept(this, CGLIB$hashCode$4$Method, CGLIB$emptyArgs, CGLIB$hashCode$4$Proxy);
+      tmp36_31;
+      return tmp36_31 == null ? 0 : ((Number)tmp36_31).intValue();
+    }
+    return super.hashCode();
+  }
+
+  final Object CGLIB$clone$5()
+    throws CloneNotSupportedException
+  {
+    return super.clone();
+  }
+
+  protected final Object clone()
+    throws CloneNotSupportedException
+  {
+    MethodInterceptor tmp4_1 = this.CGLIB$CALLBACK_0;
+    if (tmp4_1 == null)
+    {
+      tmp4_1;
+      CGLIB$BIND_CALLBACKS(this);
+    }
+    MethodInterceptor tmp17_14 = this.CGLIB$CALLBACK_0;
+    if (tmp17_14 != null) {
+      return tmp17_14.intercept(this, CGLIB$clone$5$Method, CGLIB$emptyArgs, CGLIB$clone$5$Proxy);
+    }
+    return super.clone();
+  }
+
+  public static MethodProxy CGLIB$findMethodProxy(Signature paramSignature)
+  {
+    String tmp4_1 = paramSignature.toString();
+    switch (tmp4_1.hashCode())
+    {
+    case -1574182249: 
+      if (tmp4_1.equals("finalize()V")) {
+        return CGLIB$finalize$1$Proxy;
+      }
+      break;
+    }
+  }
+
+  public HelloServiceImpl$EnhancerByCGLIB$82ef2d06()
+  {
+    CGLIB$BIND_CALLBACKS(this);
+  }
+
+  public static void CGLIB$SET_THREAD_CALLBACKS(Callback[] paramArrayOfCallback)
+  {
+    CGLIB$THREAD_CALLBACKS.set(paramArrayOfCallback);
+  }
+
+  public static void CGLIB$SET_STATIC_CALLBACKS(Callback[] paramArrayOfCallback)
+  {
+    CGLIB$STATIC_CALLBACKS = paramArrayOfCallback;
+  }
+
+  private static final void CGLIB$BIND_CALLBACKS(Object paramObject)
+  {
+    82ef2d06 local82ef2d06 = (82ef2d06)paramObject;
+    if (!local82ef2d06.CGLIB$BOUND)
+    {
+      local82ef2d06.CGLIB$BOUND = true;
+      Object tmp23_20 = CGLIB$THREAD_CALLBACKS.get();
+      if (tmp23_20 == null)
+      {
+        tmp23_20;
+        CGLIB$STATIC_CALLBACKS;
+      }
+      local82ef2d06.CGLIB$CALLBACK_0 = (// INTERNAL ERROR //
+
+```
+
+### 对委托类进行代理
+
+我们上面贴出了生成的代理类源码。以我们上面的例子为参考，下面我们总结一下CGLIB在进行代理的时候都进行了哪些工作呢
+
+- 生成的代理类HelloServiceImpl$EnhancerByCGLIB$82ef2d06继承被代理类HelloServiceImpl。在这里我们需要注意一点：**如果委托类被final修饰**，那么它不可被继承，即不可被代理；同样，如果委托类中存在**final修饰的方法**，那么该方法也不可被代理；
+- 代理类会为委托方法生成两个方法，一个是重写的sayHello方法，另一个是CGLIB$sayHello$0方法，我们可以看到它是直接调用父类的sayHello方法；
+- 当执行代理对象的sayHello方法时，会首先判断一下是否存在实现了MethodInterceptor接口的CGLIB$CALLBACK_0;，如果存在，则将调用MethodInterceptor中的intercept方法，如图2.1。
+
+我们知道，在JDK动态代理中方法的调用是通过**反射**来完成的。如果有对此不太了解的同学，可以看下我之前的博客----[深入理解JDK动态代理机制](https://www.jianshu.com/p/471c80a7e831)。但是在CGLIB中，方法的调用并不是通过反射来完成的，而是**直接对方法进行调用**：FastClass对Class对象进行特别的处理，比如将会用**数组保存method**的引用，每次调用方法的时候都是通过一个index下标来保持对方法的引用。比如下面的getIndex方法就是通过方法签名来获得方法在存储了Class信息的数组中的下标。
+
+
+到此为止CGLIB动态代理机制就介绍完了，下面给出三种代理方式之间对比。
+
+| 代理方式      | 实现                                                         | 优点                                                         | 缺点                                                         | 特点                                                       |
+| ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------------- |
+| JDK静态代理   | 代理类与委托类实现同一接口，并且在代理类中需要硬编码接口     | 实现简单，容易理解                                           | 代理类需要硬编码接口，在实际应用中可能会导致重复编码，浪费存储空间并且效率很低 | 没啥特点                                                   |
+| JDK动态代理   | 代理类与委托类实现同一接口，主要是通过代理类实现InvocationHandler并重写invoke方法来进行动态代理的，在invoke方法中将对方法进行增强处理 | 不需要硬编码接口，代码复用率高                               | 只能够代理实现了接口的委托类                                 | 底层使用反射机制进行方法的调用                             |
+| CGLIB动态代理 | 代理类将委托类作为自己的父类并为其中的非final委托方法创建两个方法，一个是与委托方法签名相同的方法，它在方法中会通过super调用委托方法；另一个是代理类独有的方法。在代理方法中，它会判断是否存在实现了MethodInterceptor接口的对象，若存在则将调用intercept方法对委托方法进行代理 | 可以在运行时对类或者是接口进行增强操作，且委托类无需实现接口 | 不能对final类以及final方法进行代理                           | 底层将方法全部存入一个数组中，通过数组索引直接进行方法调用 |
+
