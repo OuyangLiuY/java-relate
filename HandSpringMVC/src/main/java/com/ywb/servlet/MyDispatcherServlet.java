@@ -27,11 +27,11 @@ import java.util.Map;
 public class MyDispatcherServlet extends HttpServlet
 {
     //当前加载的所有类
-    private List <String> classNames = new ArrayList<>();
+    private final List <String> classNames = new ArrayList<>();
     //IOC容器的Map
-    private Map<String,Object> beans = new HashMap<>();
+    private final Map<String,Object> beans = new HashMap<>();
     // 储存路径和方法的映射关系
-    private Map<String,Object> handlerMap = new HashMap<>();
+    private final Map<String,Object> handlerMap = new HashMap<>();
     public MyDispatcherServlet()
     {
         super();
