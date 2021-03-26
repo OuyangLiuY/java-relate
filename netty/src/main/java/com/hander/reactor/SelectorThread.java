@@ -106,7 +106,7 @@ public class SelectorThread  implements  Runnable{
             SocketChannel client = server.accept();
             client.configureBlocking(false);
             // choose a selector and register
-            group.registerSelector(client);
+            group.registerSelectorV3(client);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -118,5 +118,9 @@ public class SelectorThread  implements  Runnable{
 
     public Selector getSelector() {
         return selector;
+    }
+
+    public void setWorker(SelectorThreadGroup workerGroup) {
+        this.group = workerGroup;
     }
 }
