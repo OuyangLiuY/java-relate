@@ -49,12 +49,18 @@ public class NettyClient {
                             pipeline.addLast(handler); //加入自己的处理器
                         }
                     });
-            bootstrap.connect("127.0.0.1", 6789).sync();
+            //ChannelFuture cf = bootstrap.connect("127.0.0.1", 6789).sync();
             System.out.println(" 客户端 is ok ...");
+            ChannelFuture channelFuture = bootstrap.connect("127.0.0.1", 6789).sync();
+            //关闭通道进行监听，客户端这里为什么不能这样去监听呢，因为阻塞监听之后，
+            // 就不能执行initClient之后的代码，也不会执行run方法去和服务端通信了
+            //channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } finally {
-            group.shutdownGracefully();
         }
+         /*finally {  //为什么不能这样写呢，只有在当前channel阻塞监听过程中才能使用finally去关闭
+            group.shutdownGracefully();
+            System.out.println("client finally");
+        }*/
     }
 }
