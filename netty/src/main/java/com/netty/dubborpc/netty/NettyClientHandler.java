@@ -16,7 +16,7 @@ public class NettyClientHandler  extends ChannelInboundHandlerAdapter implements
         //发送消息,
         System.out.println("发送消息...");
         this.context.writeAndFlush(param);
-        this.context.writeAndFlush("param...");
+//        this.context.writeAndFlush("param...");
         System.out.println("call 1");
         wait(); // 等待channelRead获取结果 result
         System.out.println("call 2 ");

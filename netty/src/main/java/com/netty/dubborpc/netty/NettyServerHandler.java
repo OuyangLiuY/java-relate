@@ -1,5 +1,6 @@
 package com.netty.dubborpc.netty;
 
+import com.netty.dubborpc.custom.ClientBootstrap;
 import com.netty.dubborpc.provider.HelloServiceImpl;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -16,7 +17,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         System.out.println("server channelRead");
         System.out.println("收到消息 msg = " + msg);
         // 消息协议 ...
-        if(msg.toString().startsWith("HelloServer#hello#")){
+        if(msg.toString().startsWith(ClientBootstrap.providerName)){
             String res = new HelloServiceImpl().sendMsg(msg.toString().substring(msg.toString().lastIndexOf("#")+1));
             ctx.writeAndFlush(res);
         }

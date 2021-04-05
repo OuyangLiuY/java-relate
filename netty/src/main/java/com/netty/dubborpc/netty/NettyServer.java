@@ -18,7 +18,7 @@ public class NettyServer {
 
     private static void startServer0(String hostName,int port){
         NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        NioEventLoopGroup workerGroup = new NioEventLoopGroup();
+        NioEventLoopGroup workerGroup = new NioEventLoopGroup(4);
         ServerBootstrap bootstrap = new ServerBootstrap();
         try {
             //使用链式编程来做
@@ -45,6 +45,7 @@ public class NettyServer {
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
+            System.out.println("server finally");
         }
     }
 }
