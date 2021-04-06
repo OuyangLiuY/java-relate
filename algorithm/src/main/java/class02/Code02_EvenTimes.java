@@ -22,10 +22,13 @@ public class Code02_EvenTimes {
         for (int i = 0; i < arr.length; i++) {
             // arr[1] = 111100011110000
             // rightOne=000000000010000
+            // 比如这两个奇数一个是 3(0011),一个是4(0100)
+            // (arr[i] & rightOne) != 0 => 找到当前位置这个数为1的值，然后用这个奇数个值(3)去做异或,则可以得到这个奇数3
             if ((arr[i] & rightOne) != 0){
                 arther ^= arr[i];
             }
         }
+        // 奇数3再去跟这个eor去做异或，则可以得到另外一个奇数4
         System.out.println(arther + " " + (eor ^ arther));
     }
 
