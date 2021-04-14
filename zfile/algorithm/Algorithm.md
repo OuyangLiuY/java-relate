@@ -8,15 +8,19 @@
 
 ## 异或运算
 
+#### 与：&  
+
+**两个位都为1时，结果才为1**
+
 #### 同或：|
 
-**同或运算：相同以1，不同为0**
+**同或运算：相同以1，不同为0**： （两个位都为0时，结果才为0）
 
 #### 异或：^
 
 **异或运算：相同为0，不同为1**
 
-**解释：** 异或运算就记成无进位相加！
+**解释：** 异或运算就记成**无进位相加**！
 
 列子：
 
@@ -209,6 +213,46 @@ public static int hashKTimes(int[] arr, int k, int m) {
         System.out.println("测试结束...");
     }
 ```
+
+## 数据结构
+
+### 链表
+
+```java
+/**
+ * 链表数据结构
+ *
+ *   单链表
+ */
+class Node {
+    private int value;
+    private Node next;
+
+    public Node(int value) {
+        this.value = value;
+    }
+}
+
+/**
+ * 双链表
+ */
+class DoubleNode{
+    private int value;
+    private DoubleNode last;
+    private DoubleNode next;
+
+    public DoubleNode(int value) {
+        this.value = value;
+    }
+}
+```
+
+### 单向链表和双向链表的练习：
+
+链表相关的问题几乎都是coding问题
+
+1. 单链表和双链表如何反转
+2. 把给定值都删除
 
 
 
