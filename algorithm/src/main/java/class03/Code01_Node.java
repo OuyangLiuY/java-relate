@@ -3,32 +3,33 @@ package class03;
 /**
  * 链表数据结构
  *
- *
- *   单链表
- */
-public class Node {
-    public int value;
-    public Node next;
+*/
+public class Code01_Node{
+    /**
+     *  单链表
+     */
+    static class Node {
+        public int value;
+        public Node next;
 
-    public Node(int value) {
-        this.value = value;
+        public Node(int value) {
+            this.value = value;
+        }
     }
-}
 
-/**
- * 双链表
- */
-class DoubleNode{
-    public int value;
-    public DoubleNode last;
-    public DoubleNode next;
+    /**
+     * 双链表
+     */
+    static class DoubleNode{
+        public int value;
+        public DoubleNode last;
+        public DoubleNode next;
 
-    public DoubleNode(int value) {
-        this.value = value;
+        public DoubleNode(int value) {
+            this.value = value;
+        }
     }
-}
 
-class Main{
     // 反转单链表
     // a -> b -> c -> null
     // c -> b -> a -> null

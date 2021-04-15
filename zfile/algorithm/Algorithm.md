@@ -254,5 +254,415 @@ class DoubleNode{
 1. 单链表和双链表如何反转
 2. 把给定值都删除
 
+```java
+/**
+ * 链表数据结构
+ *
+ *   单链表
+ */
+public class Node {
+    public int value;
+    public Node next;
+
+    public Node(int value) {
+        this.value = value;
+    }
+}
+
+/**
+ * 双链表
+ */
+class DoubleNode{
+    public int value;
+    public DoubleNode last;
+    public DoubleNode next;
+
+    public DoubleNode(int value) {
+        this.value = value;
+    }
+}
+
+// 反转单链表
+    // a -> b -> c -> null
+    // c -> b -> a -> null
+    public static Node converseNodeList(Node head){
+
+        println(head);
+        //head = a
+        Node pre = null;
+        Node next = null;
+        while (head != null){
+            //1. 获取head.next给到next节点
+            next = head.next;
+
+            //2. 反转之后head.next节点应该指向前置节点pre
+            head.next = pre;
+            //3. pre节点为当前的head节点
+            pre = head;
+
+            //4. 将head 指向 head.next，以此来将整个链表循环
+            head = next;
+        }
+        println(pre);
+        return pre;
+    }
+
+    // 反转双向链表
+    // a -> b -> c -> null
+    // c -> b -> a -> null
+    public static DoubleNode converseDoubleNodeList(DoubleNode head){
+        printlnDoubleNode(head);
+        // 反转之后节点对象
+        DoubleNode pre = null;
+        DoubleNode next = null;
+        while (head != null){
+            next = head.next;
+            head.next = pre;
+            head.last = next;
+            pre = head;
+            head = next;
+        }
+        printlnDoubleNode(pre);
+        return pre;
+    }
+```
 
 
+
+```java
+// 把给定值都删除
+public static Node removeValue(Node head,int value ){
+        //在链表中删除这个值，临界条件，需找到第一个值不为value的节点
+        while (head != null){
+            if(head.value != value){
+                break;
+            }
+            head = head.next;
+        }
+        //pre是返回的新的node数据
+        Node pre = head;
+        Node cur = head;
+        while (cur != null){
+            if(cur.value == value){
+                //改变链表的指向位置
+                pre.next = cur.next;
+            }else {
+                pre = cur;
+            }
+            cur = cur.next;
+        }
+        return pre;
+    }
+```
+
+## 栈和队列
+
+逻辑概念
+
+栈：数据先进后出，犹如弹匣
+
+队列：数据先进先出，好似排队
+
+#### 栈和队列的实际实现
+
+**双向链表实现**
+
+```java
+public static class Node<T> {
+    public T value;
+    public Node<T> last;
+    public Node<T> next;
+
+    public Node(T data) {
+        value = data;
+    }
+}
+// 中间队列（双端队列）
+public static class DoubleEndsQueue<T>{
+    public Node<T> head;
+    public Node<T> tail;
+    // 从头添加数据
+    public void  addFromHead(T value){
+        Node<T> cur = new Node<>(value);
+        if(head == null){
+            head = cur;
+            tail = cur;
+        }else {
+            // 从头添加
+            cur.next = head;
+            head.last = cur;
+            // 指针改变
+            head = cur;
+        }
+    }
+    // 从尾部添加数据
+    public void addFromTail(T value){
+        Node<T> cur = new Node<>(value);
+        if(tail == null){
+            head = cur;
+            tail = cur;
+        }else {
+            // 从尾添加
+            cur.last = tail;
+            tail.next = cur;
+            // 指针改变
+            tail = cur;
+        }
+    }
+    // 从头拿取数据
+    public T popFromHead(){
+        if(head == null){
+            return null;
+        }
+        Node<T> cur = head;
+       if(tail == head){
+           tail = null;
+           head = null;
+       }else {
+           // 指针改变 head指向下一个节点
+           head = head.next;
+           //断链只返回这个cur的值，而不是整个head
+           cur.next = null;
+           head.last = null;
+       }
+       return cur.value;
+    }
+    // 从尾部拿取数据
+    public T popFromTail(){
+        if(tail == null){
+            return null;
+        }
+        Node<T> cur = tail;
+        if(tail == head){
+            tail = null;
+            head = null;
+        }else {
+            // 指针改变 tail 指向上一个节点
+            tail = tail.last;
+            //断链只返回这个cur的值，而不是整个head
+            cur.last = null;
+            head.next = null;
+        }
+        return cur.value;
+    }
+
+    public boolean isEmpty() {
+        return head == null;
+    }
+}
+public static class MyStack<T>{
+    public DoubleEndsQueue<T> queue;
+    public MyStack (){
+        this.queue = new DoubleEndsQueue<>();
+    }
+    public void push(T v){
+        // 从头加
+        queue.addFromHead(v);
+    }
+    public T pop(){
+        // 从头弹
+        return queue.popFromHead();
+    }
+    public boolean isEmpty() {
+        return queue.isEmpty();
+    }
+}
+public static class MyQueue<T>{
+    public DoubleEndsQueue<T> queue;
+    public MyQueue (){
+        this.queue = new DoubleEndsQueue<>();
+    }
+    public void push(T v){
+        queue.addFromHead(v);
+    }
+    public T pop(){
+        return queue.popFromTail();
+    }
+    public boolean isEmpty(){
+        return queue.isEmpty();
+    }
+}
+public static boolean isEqual(Integer o1, Integer o2) {
+    if (o1 == null && o2 != null) {
+        return false;
+    }
+    if (o1 != null && o2 == null) {
+        return false;
+    }
+    if (o1 == null && o2 == null) {
+        return true;
+    }
+    return o1.equals(o2);
+}
+```
+
+**使用数组实现队列：**
+
+```java
+// 数组方式实现队列
+public static class MyQueue{
+        private final int[] arr;
+        private int pushI;
+        private int popI;
+        private int size;
+        // 当前数组长度限制
+        private  int limit;
+        public MyQueue(int limit){
+            arr = new int[limit];
+            size = 0;
+            pushI = 0;
+            popI = 0;
+        }
+
+        public void push(int v){
+            if(size == limit){
+                throw new RuntimeException("队列满了，不能在添加数据");
+            }
+            size ++;
+            // 添值
+            arr[pushI] = v;
+            // beginI 下标加 1
+            pushI = nextIndex(pushI);
+        }
+        public int pop(){
+            if(size == 0){
+                throw  new RuntimeException("队列空了，不能再获取数据");
+            }
+            size --;
+            int ans = arr[popI] ;
+            popI = nextIndex(popI);
+            return ans;
+        }
+
+        public boolean isEmpty() {
+            return size == 0;
+        }
+
+        private int nextIndex(int index) {
+            return index < limit - 1 ? index + 1 : 0 ;
+        }
+    }
+```
+
+
+
+
+
+#### 栈和队列的常见面试题
+
+**题1：**怎么用数组实现不超过固定大小的队列和栈？
+
+栈：正常使用
+
+队列：环形数组
+
+
+
+**题2：**实现一个特殊的栈，在基本功能的基础上，再实现返回栈中最小元素的功能
+
+1）pop、push、getMin操作的时间复杂度都是 O(1)。 
+
+2）设计的栈类型可以使用现成的栈结构。 
+
+## 递归
+
+**例子：**
+
+求数组arr[L..R]中的最大值，怎么用递归方法实现。
+
+1）将[L..R]范围分成左右两半。左：[L..Mid]  右[Mid+1..R]
+2）左部分求最大值，右部分求最大值
+3） [L..R]范围上的最大值，是max{左部分最大值，右部分最大值}
+
+注意：2）是个递归过程，当范围上只有一个数，就可以不用再递归了
+
+```java
+ // 求arr中的最大值
+    public static int getMax(int[] arr) {
+        return process(arr, 0, arr.length - 1);
+    }
+// 一个最简单的递归调用
+    public static int process(int[] arr, int L, int R) {
+        // base case , arr[L...R] 范围上只有一个数，直接返回，必须要有的
+        if (L == R) {
+            return arr[L];
+        }
+        //(L+R) / 2 == L + ((R - L) >> 1)
+        int mid = L + ((R - L) >> 1); // 中点   	1
+        int letMax = process(arr, L, mid);
+        int rightMax = process(arr, mid + 1, R);
+        return Math.max(letMax, rightMax);
+    }
+```
+
+**递归的脑图和实际实现：**
+
+对于新手来说，把调用的过程画出结构图是必须的，这有利于分析递归
+递归并不是玄学，递归底层是利用系统栈来实现的
+注意：**任何递归函数都一定可以改成非递归**
+
+**Master公式：**
+
+形如
+T(N) = a * T(N/b) + O(N^d)(其中的a、b、d都是常数)
+的递归函数，可以直接通过Master公式来确定时间复杂度
+如果 log(b,a) < d，复杂度为O(N^d)
+如果 log(b,a) > d，复杂度为O(N^log(b,a))
+如果 log(b,a) == d，复杂度为O(N^d  * logN)
+
+## 哈希表
+
+1. 哈希表在使用层面上可以理解为一种集合结构
+2. 如果只有key，没有伴随数据value，可以使用HashSet结构
+3. 如果既有key，又有伴随数据value，可以使用HashMap结构
+4. 有无伴随数据，是HashMap和HashSet唯一的区别，实际结构是一回事 
+5. 使用哈希表增(put)、删(remove)、改(put)和查(get)的操作，可以认为时间复杂度为 O(1)，但是常数时间比较大 
+6. 放入哈希表的东西，如果是基础类型，内部按值传递，内存占用是这个东西的大小 
+7. 放入哈希表的东西，如果不是基础类型，内部按引用传递，内存占用是8字节
+
+**注意：**
+
+**哈希表在使用时，增删改查时间复杂度都是O(1)**
+
+## 有序表
+
+1. 有序表在使用层面上可以理解为一种集合结构
+2. 如果只有key，没有伴随数据value，可以使用TreeSet结构
+3. 如果既有key，又有伴随数据value，可以使用TreeMap结构
+4. 有无伴随数据，是TreeSet和TreeMap唯一的区别，底层的实际结构是一回事
+5. 有序表把key按照顺序组织起来，而哈希表完全不组织
+6. 红黑树、AVL树、size-balance-tree和跳表等都属于有序表结构，只是底层具体实现不同
+7. 放入如果是基础类型，内部按值传递，内存占用就是这个东西的大小
+8. 放入如果不是基础类型，内部按引用传递，内存占用是8字节
+9. 不管是什么底层具体实现，只要是有序表，都有以下固定的基本功能和固定的时间复杂度 
+
+**基本API：**
+
+1)void put(K key, V value)
+将一个(key，value)记录加入到表中，或者将key的记录 更新成value。
+
+2)V get(K key)
+根据给定的key，查询value并返回。
+
+3)void remove(K key)
+移除key的记录。 
+
+4)boolean containsKey(K key)
+询问是否有关于key的记录。
+
+5)K firstKey()
+返回所有键值的排序结果中，最小的那个。
+
+6)K lastKey()
+返回所有键值的排序结果中，最大的那个。
+
+7)K floorKey(K key)
+返回<= key 离key最近的那个
+
+8)K ceilingKey(K key）
+返回>= key 离key最近的那个
+
+**注意：**
+
+1. **Java中有序表是 TreeMap，而TreeMap是用红黑树实现的**
+2. **有序表在使用时，比哈希表功能多，时间复杂度都是O(logN)**
