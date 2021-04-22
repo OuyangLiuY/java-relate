@@ -776,8 +776,74 @@ merge过程需要辅助数组，所以额外空间复杂度为O(N)
 3左边比3小的数：1
 4左边比4小的数：1、3
 2左边比2小的数：1
-5左边比5小的数：1、3、4、 2
+5左边比5小的数：1、3、4、 2		
 所以数组的小和为1+1+3+1+1+3+4+2=16 
+
+```java
+public static int minSum(int[] arr) {
+        if (arr == null || arr.length < 2) {
+            return 0;
+        }
+        return process(arr, 0, arr.length - 1);
+    }
+
+    // arr[L..R]既要排好序，也要求小和返回
+    // 所有merge时，产生的小和，累加
+    // 左 排序   merge
+    // 右 排序  merge
+    // merge
+    private static int process(int[] arr, int L, int R) {
+        if (L == R) {
+            return 0;
+        }
+        int mid = (R + L) / 2;
+        return process(arr, L, mid) +
+                process(arr, mid + 1, R) +
+                merge(arr, L, mid, R);
+    }
+
+    private static int merge(int[] arr, int L, int M, int R) {
+        int[] help = new int[R - L + 1];
+        int index = 0;
+        int p1 = L;
+        int p2 = M + 1;
+        int sum = 0;
+        while (p1 <= M && p2 <= R) {
+            //先求值，再排序
+            sum += arr[p1] < arr[p2]? (R- p2 +1) * arr[p1] : 0;
+            help[index++] = arr[p1] < arr[p2] ? arr[p1++] : arr[p2++];
+        }
+        while (p1 <= M){
+            help[index ++] = arr[p1++];
+        }
+        while (p2 <= R){
+            help[index ++] = arr[p2++];
+        }
+        System.arraycopy(help,0,arr,L,help.length);
+        return sum;
+    }
+    public static int minSumForComp(int[]arr){
+        if (arr == null || arr.length < 2) {
+            return 0;
+        }
+        int sum = 0;
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < i; j++) {
+                sum += arr[j] < arr[i] ? arr[j] : 0;
+            }
+        }
+        return sum;
+    }
+
+    public static void main(String[] args) {
+        int[] arr1 = {1,3,4,2,5};
+        System.out.println(minSum(arr1));
+        int[] arr2 = {1,3,4,2,5};
+        System.out.println(minSumForComp(arr2));
+    }		
+```
+
+
 
 ### 题目2：
 
@@ -785,6 +851,63 @@ merge过程需要辅助数组，所以额外空间复杂度为O(N)
 任何一个前面的数a，和任何一个后面的数b，
 如果(a,b)是降序的，就称为逆序对
 返回数组中所有的逆序对
+
+```java
+public static int reverseNum(int[] arr) {
+        return process(arr, 0, arr.length - 1);
+    }
+
+    private static int process(int[] arr, int L, int R) {
+        if (L == R) {
+            return 0;
+        }
+        int mid = L + ((R - L) >> 1);
+        return process(arr, L, mid) + process(arr, mid + 1, R) + merge(arr, L, mid, R);
+    }
+
+    private static int merge(int[] arr, int L, int M, int R) {
+        int[] help = new int[R - L + 1];
+        // 反过来做
+        int index = help.length - 1;
+        int p1 = M;
+        int p2 = R;
+        int sum = 0;
+        while (p1 >= L && p2 > M) {
+            //先求值，再排序,有多少对？ 右边 - mid
+            sum += arr[p1] > arr[p2] ? (p2 - M) : 0;
+            help[index--] = arr[p1] > arr[p2] ? arr[p1--] : arr[p2--];
+        }
+        while (p1 >= L) {
+            help[index--] = arr[p1--];
+        }
+        while (p2 > M) {
+            help[index--] = arr[p2--];
+        }
+        System.arraycopy(help, 0, arr, L, help.length);
+        return sum;
+    }
+
+    public static int comparator(int[] arr) {
+        int ans = 0;
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = i + 1; j < arr.length; j++) {
+                if (arr[i] > arr[j]) {
+                    ans++;
+                }
+            }
+        }
+        return ans;
+    }
+
+    public static void main(String[] args) {
+        int[] arr1 = {1, 3, 4, 2, 5};
+        System.out.println(reverseNum(arr1));
+        int[] arr2 = {1, 3, 4, 2, 5};
+        System.out.println(comparator(arr2));
+    }		
+```
+
+
 
 ### 题目3：
 
