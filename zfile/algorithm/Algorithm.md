@@ -666,3 +666,134 @@ T(N) = a * T(N/b) + O(N^d)(其中的a、b、d都是常数)
 
 1. **Java中有序表是 TreeMap，而TreeMap是用红黑树实现的**
 2. **有序表在使用时，比哈希表功能多，时间复杂度都是O(logN)**
+
+
+
+## 归并排序
+
+**递归实现**：
+
+1. 整体是递归，左边排好序+右边排好序+merge让整体有序
+2. 让其整体有序的过程里用了排外序方法
+3. 利用master公式求解时间复杂度
+
+```java
+ // 递归实现
+    public static void mergeSortOfRecursion(int[] arr) {
+        if (arr == null || arr.length < 2) {
+            return;
+        }
+        sort(arr, 0, arr.length - 1);
+    }
+
+    private static void sort(int[] arr, int L, int R) {
+        // base case 自己写的时候忘记这个临界条件
+        if (L == R) {
+            return;
+        }
+        int mid = (L + R) / 2;
+        sort(arr, L, mid);
+        sort(arr, mid + 1, R);
+        merge(arr, mid, L, R);
+    }
+```
+
+
+
+**非递归实现：**
+
+```java
+// 归并排序非递归实现
+    public static void mergeSortNotRecursion(int[] arr) {
+        //
+        if (arr == null || arr.length < 2) {
+            return;
+        }
+        int N = arr.length;
+        // 步长
+        int mergeSize = 1;
+        while (mergeSize < N) { // Log N
+            // 当前左组的，第一个位置
+            int L = 0;
+            while (L < N) {
+                // 长度不够
+                if (mergeSize >= N - L) {
+                    break;
+                }
+                int mid = L + mergeSize - 1;
+                int R = mid + Math.min(mergeSize, N - mid - 1);
+                merge(arr, mid, L, R);
+                L = R + 1;
+            }
+            // 步长为 2^n
+            mergeSize <<= 1;
+        }
+    }
+```
+
+**公共merge方法：**
+
+```java
+ private static void merge(int[] arr, int mid, int L, int R) {
+        int[] help = new int[R - L + 1];
+        int index = 0;
+        //左指针（处理左边数据）
+        int l = L;
+        //右指针（处理右边数据）
+        int r = mid + 1;
+        //条件:左指针不得大于mid，右指针不得大于R
+        while (l <= mid && r <= R) {
+            help[index++] = arr[l] <= arr[r] ? arr[l++] : arr[r++];
+        }
+        // 要么左边数据全部拷贝完毕，只剩右边
+        while (r <= R) {
+            help[index++] = arr[r++];
+        }
+        // 要么右边数据全部拷贝完毕，只剩左边
+        while (l <= mid) {
+            help[index++] = arr[l++];
+        }
+        //最后将help排好序的数组放进arr中
+        System.arraycopy(help, 0, arr, L, help.length);
+    }
+```
+
+**归并排序复杂度：**
+
+T(N) = 2 * T(N/2) + O(N)
+
+根据master公式可知时间复杂度为O(N * log N)
+
+merge过程需要辅助数组，所以额外空间复杂度为O(N)
+
+**归并排序的实质是把比较行为变为有序信息传递，比O(N ^ 2)要快**
+
+### 题目1：
+
+在一个数组中，一个数左边比它小的数的总和，叫数的小和，所有数的小和累加起来，叫数组小和。求数组小和。
+例子： [1,3,4,2,5] 
+1左边比1小的数：没有
+3左边比3小的数：1
+4左边比4小的数：1、3
+2左边比2小的数：1
+5左边比5小的数：1、3、4、 2
+所以数组的小和为1+1+3+1+1+3+4+2=16 
+
+### 题目2：
+
+在一个数组中，
+任何一个前面的数a，和任何一个后面的数b，
+如果(a,b)是降序的，就称为逆序对
+返回数组中所有的逆序对
+
+### 题目3：
+
+在一个数组中，
+对于每个数num，求有多少个后面的数 * 2 依然<num，求总个数
+比如：[3,1,7,0,2]
+3的后面有：1，0
+1的后面有：0
+7的后面有：0，2
+0的后面没有
+2的后面没有
+所以总共有5个
