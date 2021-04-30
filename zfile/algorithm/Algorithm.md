@@ -931,6 +931,66 @@ https://leetcode.com/problems/count-of-range-sum/
 
 返回arr中有多少个子数组的累加和在[lower,upper]范围上
 
+```java
+public static int countRangeSum(int[] nums, int lower, int upper) {
+		if (nums == null || nums.length == 0) {
+			return 0;
+		}
+		long[] sum = new long[nums.length];
+		sum[0] = nums[0];
+		for (int i = 1; i < nums.length; i++) {
+			sum[i] = sum[i - 1] + nums[i];
+		}
+		return process(sum, 0, sum.length - 1, lower, upper);
+	}
+
+	public static int process(long[] sum, int L, int R, int lower, int upper) {
+		if (L == R) {
+			return sum[L] >= lower && sum[L] <= upper ? 1 : 0;
+		}
+		int M = L + ((R - L) >> 1);
+		return process(sum, L, M, lower, upper) + process(sum, M + 1, R, lower, upper)
+				+ merge(sum, L, M, R, lower, upper);
+	}
+
+	public static int merge(long[] arr, int L, int M, int R, int lower, int upper) {
+		int ans = 0;
+		int windowL = L;
+		int windowR = L;
+		// [windowL, windowR)
+		for (int i = M + 1; i <= R; i++) {
+			long min = arr[i] - upper;
+			long max = arr[i] - lower;
+			while (windowR <= M && arr[windowR] <= max) {
+				windowR++;
+			}
+			while (windowL <= M && arr[windowL] < min) {
+				windowL++;
+			}
+			ans += windowR - windowL;
+		}
+		long[] help = new long[R - L + 1];
+		int i = 0;
+		int p1 = L;
+		int p2 = M + 1;
+		while (p1 <= M && p2 <= R) {
+			help[i++] = arr[p1] <= arr[p2] ? arr[p1++] : arr[p2++];
+		}
+		while (p1 <= M) {
+			help[i++] = arr[p1++];
+		}
+		while (p2 <= R) {
+			help[i++] = arr[p2++];
+		}
+		for (i = 0; i < help.length; i++) {
+			arr[L + i] = help[i];
+		}
+		return ans;
+	}
+```
+
+
+
 ## 快速排序
 
 Partition过程：
@@ -938,10 +998,63 @@ Partition过程：
 给定一个数组arr，和一个整数num。请把小于等于num的数放在数组的左边，大于num的数放在数组的右边。
 要求额外空间复杂度O(1)，时间复杂度O(N) 
 
+```java
+ public static int partition(int[] arr,int L ,int R){
+        if(L > R){
+            return -1;
+        }
+        if(L == R){
+            return arr[L];
+        }
+        int lessEqual = L - 1;
+        int index = L;
+        while (index < R){
+            // 以数组中R位置的数比较
+            if(arr[index] <= arr[R]){
+                swap(arr,index, ++lessEqual);
+            }
+            index++;
+        }
+        // 最后将arr[R]这个数据跟arr[L...R-1] 的中点位置的数据替换
+        swap(arr,++lessEqual,R);
+        return lessEqual;
+    }
+```
+
+
+
 荷兰国旗问题：
 
 给定一个数组arr，和一个整数num。请把小于num的数放在数组的左边，等于num的数放在中间，大于num的数放在数组的右边。
 要求额外空间复杂度O(1)，时间复杂度O(N) 
+
+```java
+ public static int[] netherLandsFlag(int[] arr,int L, int R){
+        if(L>R){
+            return new int[] { -1, -1 };
+        }
+        if(L ==R){
+            return new int[]{L,R};
+        }
+        int less = L -1; // < 区间 右边
+        int more = R; // >区间，左边界
+        int index = L;
+        while (index < more){ // 当前位置，不能和 >区的左边界撞上
+            if(arr[index] == arr[R]){
+                index++;
+            }else if(arr[index] < arr[R]){ // <
+//                swap(arr,less + 1, index);
+//                less ++;
+//                index++; //等同于下面表达式
+                swap(arr,++less,index++);
+            }else { // >
+                swap(arr,index,--more);
+            }
+        }
+        swap(arr,more,R); //最后跟R位置上数据交换
+        return new int[]{less+1,more};
+    }
+```
 
 ### 快速排序1.0
 
@@ -949,7 +1062,25 @@ Partition过程：
 1）用arr[R]对该范围做partition，<= arr[R]的数在左部分并且保证arr[R]最后来到左部分的最后一个位置，记为M； <= arr[R]的数在右部分（arr[M+1..R]）
 2）对arr[L..M-1]进行快速排序(递归)
 3）对arr[M+1..R]进行快速排序(递归)
-因为每一次partition都会搞定一个数的位置且不会再变动，所以排序能完成
+**因为每一次partition都会搞定一个数的位置且不会再变动，所以排序能完成**
+
+```java
+   // 快速排序1.0
+    public static void quickSort1(int[] arr){
+        processor1(arr,0,arr.length - 1);
+    }
+
+    private static void processor1(int[] arr, int L, int R) {
+        if(L >= R){
+            return;
+        }
+        // 一次排序的结果：
+        // L..R partition arr[R] [ <=arr[R] arr[R] >arr[R] ]
+        int M = partition(arr,L,R);
+        processor1(arr,L , M - 1);
+        processor1(arr,M + 1, R);
+    }
+```
 
 ### 快速排序2.0
 
@@ -957,7 +1088,26 @@ Partition过程：
 1）用arr[R]对该范围做partition，< arr[R]的数在左部分，== arr[R]的数中间，>arr[R]的数在右部分。假设== arr[R]的数所在范围是[a,b]
 2）对arr[L..a-1]进行快速排序(递归)
 3）对arr[b+1..R]进行快速排序(递归)
-因为每一次partition都会搞定一批数的位置且不会再变动，所以排序能完成
+**因为每一次partition都会搞定一批数的位置且不会再变动，所以排序能完成**
+
+```
+// 快速排序2.0
+public static void quickSort2(int[] arr){
+    processor2(arr,0,arr.length - 1);
+}
+
+private static void processor2(int[] arr, int L, int R) {
+    if(L >= R){
+        return;
+    }
+    // 一次排序的结果：
+    // L..R partition arr[R] [ <=arr[R] arr[R] >arr[R] ]
+    // **因为每一次partition都会搞定一批数的位置且不会再变动，所以排序能完成**
+    int[] M  = netherLandsFlag2(arr,L,R);
+    processor2(arr,L , M[0] - 1);
+    processor2(arr,M[1] + 1, R);
+}
+```
 
 **快速排序1.0和2.0的时间复杂度分析**
 
@@ -974,6 +1124,27 @@ Partition过程：
 3）对arr[b+1..R]进行快速排序(递归)
 因为每一次partition都会搞定一批数的位置且不会再变动，所以排序能完成
 
+```java
+// 快速排序3.0
+public static void quickSort3(int[] arr) {
+    if (arr == null || arr.length < 2) {
+        return;
+    }
+    processor3(arr, 0, arr.length - 1);
+}
+
+private static void processor3(int[] arr, int L, int R) {
+    if (L >= R) {
+        return;
+    }
+    // 随机快排序
+    swap(arr, L + (int) (Math.random() * (R - L + 1)), R);
+    int[] M = netherLandsFlag2(arr, L, R);
+    processor3(arr, L, M[0] - 1);
+    processor3(arr, M[1] + 1, R);
+}
+```
+
 **随机快排的时间复杂度分析：**
 
 1）通过分析知道，划分值越靠近中间，性能越好；越靠近两边，性能越差
@@ -982,3 +1153,91 @@ Partition过程：
 4）那么所有情况都考虑，时间复杂度就是这种概率模型下的长期期望！
 
 **时间复杂度O(N*logN)，额外空间复杂度O(logN)都是这么来的。**
+
+## 随机快排的实现
+
+### 递归实现：
+
+```java
+public static int[] netherLandsFlag(int[] arr, int L, int R) {
+        if (L == R) {
+            return new int[]{L, R};
+        }
+        int index = L;
+        int more = R;
+        int less = L - 1;
+        while (index < more) { // 左边界和右边界不能碰上
+            if (arr[index] < arr[R]) {
+                SortUtils.swap(arr, index++, ++less);
+            } else if (arr[index] > arr[R]) {
+                // 大于的时候，index不动，下次继续判断index位置的值
+                SortUtils.swap(arr, index, --more);
+            } else {
+                index++;
+            }
+        }
+        SortUtils.swap(arr, more, R);
+        return new int[]{less + 1, more};
+    }
+
+    public static void processor(int[] arr, int L, int R) {
+        if (L >= R) { // base case 递归结束的条件
+            return;
+        }
+        //为了让R这个位置的值尽量是L...R上的中间值
+        SortUtils.swap(arr, L + (int) (Math.random() * ((R - L) + 1)), R);
+        int[] res = netherLandsFlag(arr, L, R);
+        processor(arr, L, res[0] - 1);
+        processor(arr, res[1] + 1, R);
+    }
+
+    public static void quickSortRecursive(int[] arr) {
+        if (arr == null || arr.length < 2) {
+            return;
+        }
+        processor(arr, 0, arr.length - 1);
+    }
+```
+
+### 非递归实现：
+
+实现的原理：**其实质也是用了递归的思想，只是将递归产生的stack自己手动使用Oop对象存储起来**
+
+```java
+private static void quickSortNonRecursive(int[] arr) {
+    if (arr == null || arr.length < 2) {
+        return;
+    }
+    int R = arr.length - 1;
+    SortUtils.swap(arr, (int) (Math.random() * (R + 1)), R); // 这就是随机的意思
+    int[] equalArea = netherLandsFlag(arr, 0, R);
+    int el = equalArea[0];
+    int er = equalArea[1];
+    Stack<Oop> stack = new Stack<>();
+    stack.push(new Oop(0, el - 1));
+    stack.push(new Oop(er + 1, R));
+    while (!stack.isEmpty()) {
+        Oop op = stack.pop(); // op.l ... op.r
+        if (op.l < op.r) {
+            SortUtils.swap(arr, op.l + (int) (Math.random() * (op.r - op.l + 1)), op.r); // 这就是随机的意思
+            int[] innerArea = netherLandsFlag(arr, op.l, op.r);
+            int iel = innerArea[0];
+            int ier = innerArea[1];
+            stack.push(new Oop(op.l, iel - 1));
+            stack.push(new Oop(ier + 1, op.r));
+        }
+    }
+}
+
+// 快排非递归版本需要的辅助类
+// 要处理的是什么范围上的排序
+public static class Oop {
+    public int l;
+    public int r;
+
+    public Oop(int left, int right) {
+        l = left;
+        r = right;
+    }
+}
+```

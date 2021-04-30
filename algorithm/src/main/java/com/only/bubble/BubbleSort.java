@@ -13,7 +13,7 @@ public class BubbleSort {
         for (int e = arr.length - 1; e > 0 ; e--) {
             for (int i = 0; i < e; i++) {
                 if(arr[i]  > arr[i + 1]){
-                    SortUtils.swap(arr,i,i + 1);
+                    SortUtils.swapNoEqualIndex(arr,i,i + 1);
                 }
             }
         }

@@ -49,9 +49,15 @@ public class SortUtils {
     //  6:110 7:111
     //  111
     // i和j是一个位置的话，会出错
-    public static void swap(int[] arr, int i, int j) {
+    public static void swapNoEqualIndex(int[] arr, int i, int j) {
         arr[i] = arr[i] ^ arr[j];// 110 ^ 111 = 001
         arr[j] = arr[i] ^ arr[j];// 001 ^ 111 = 110
         arr[i] = arr[i] ^ arr[j];// 001 ^ 110 = 111
+    }
+
+    public static void swap(int[] arr, int i, int j) {
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
     }
 }
