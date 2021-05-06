@@ -1288,8 +1288,50 @@ public int compare(T o1, T o2) ;
 1. 整个数组都变成大根堆结构，建立堆的过程: 
    1. 从上到下的方法，时间复杂度为O(N * LogN)
    2. 从下到上的方法，时间复杂度为O(N)
+   
 2. 把堆的最大值和堆尾巴的值交换，然后减少堆的大小之后，再去调整堆，一直周而复始，时间复杂度为O(N * Log N)
+
 3. 堆的大小减成0之后，排序完成
+
+   ```java
+   // 堆排序额外空间复杂度O(1)
+   	public static void heapSort(int[] arr) {
+   		if (arr == null || arr.length < 2) {
+   			return;
+   		}
+   		// O(N*logN)
+   //		for (int i = 0; i < arr.length; i++) { // O(N)
+   //			heapInsert(arr, i); // O(logN)
+   //		}
+   		// O(N)
+   		for (int i = arr.length - 1; i >= 0; i--) {
+   			heapify(arr, i, arr.length);
+   		}
+   		int heapSize = arr.length;
+   		swap(arr, 0, --heapSize);
+   		// O(N*logN)
+   		while (heapSize > 0) { // O(N)
+   			heapify(arr, 0, heapSize); // O(logN)
+   			swap(arr, 0, --heapSize); // O(1)
+   		}
+   	}
+   
+    private static void heapify(int[] arr, int index, int heapSize) {
+           int left = index * 2 + 1;
+           while (left < heapSize) {
+               int largest = left + 1 < heapSize && arr[left + 1] > arr[left] ? left + 1 : left;
+               largest = arr[largest] > arr[index] ? largest : index;
+               if (largest == index) {
+                   break;
+               }
+               SortUtils.swap(arr, index, largest);
+               index = largest;
+               left = index * 2 + 1;
+           }
+       }
+   ```
+
+   
 
 ### 与堆有关的题目
 
@@ -1297,3 +1339,124 @@ public int compare(T o1, T o2) ;
 
 请选择一个合适的排序策略，对这个数组进行排序。 
 
+```java
+public static void sortedArrDistanceLessK(int[] arr,int k){
+    if (k == 0) {
+        return;
+    }
+    // 默认小根堆
+    PriorityQueue<Integer> heap = new PriorityQueue<>();
+    int index = 0;
+    // 0...K-1
+    for (; index <= Math.min(arr.length - 1, k - 1); index++) {
+        heap.add(arr[index]);
+    }
+    // 將heap堆的值依次彈出，並將還沒有添加到的數據放入到heap堆中，
+    int i = 0;
+    for (; index < arr.length; i++, index++) {
+        heap.add(arr[index]);
+        arr[i] = heap.poll();
+    }
+    // 最後將heap中的最後一組數據依次彈出，則可排序完成
+    while (!heap.isEmpty()) {
+        arr[i++] = heap.poll();
+    }
+}
+```
+
+### 堆和加强堆
+
+#### 最大线段重合问题（用堆的实现）
+
+给定很多线段，每个线段都有两个数[start, end]，
+表示线段开始位置和结束位置，左右都是闭区间
+规定：
+1）线段的开始和结束位置一定都是整数值
+2）线段重合区域的长度必须>=1
+返回线段最多重合区域中，包含了几条线段
+
+```java
+public static int maxCover2(int[][] lines){
+    Line[] ls = new Line[lines.length];
+    for (int i = 0; i < lines.length; i++) {
+        ls[i] = new Line(lines[i][0],lines[i][1]);
+    }
+    int max = 0;
+    Arrays.sort(ls,(o1,o2) -> o1.start - o2.start);
+    // 小根堆，每一条线段的结尾数值，使用默认的
+    PriorityQueue<Integer> heap = new PriorityQueue<>();
+    for (Line l : ls) {
+        // lines[i] -> cur  在黑盒中，把<=cur.start 东西都弹出
+        if (!heap.isEmpty() && l.start >= heap.peek()) {
+            heap.poll();
+        }
+        heap.add(l.end);
+        max = Math.max(heap.size(), max);
+    }
+    return max;
+}
+ public static class Line{
+        public int start;
+        public int end;
+
+        public Line(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+    }
+```
+
+#### 手動改寫堆
+
+1）建立反向索引表
+2）建立比较器
+3）核心在于各种结构相互配合，非常容易出错
+
+
+
+#### 手动改写堆题目练习
+
+给定一个整型数组，int[] arr；和一个布尔类型数组，boolean[] op
+两个数组一定等长，假设长度为N，arr[i]表示客户编号，op[i]表示客户操作
+arr = [ 3   ,   3   ,   1   ,  2,      1,      2,      5…
+op = [ T   ,   T,      T,     T,      F,      T,       F…
+依次表示：3用户购买了一件商品，3用户购买了一件商品，1用户购买了一件商品，2用户购买了一件商品，1用户退货了一件商品，2用户购买了一件商品，5用户退货了一件商品…
+
+```txt
+一对arr[i]和op[i]就代表一个事件：
+用户号为arr[i]，op[i] == T就代表这个用户购买了一件商品
+op[i] == F就代表这个用户退货了一件商品
+现在你作为电商平台负责人，你想在每一个事件到来的时候，
+都给购买次数最多的前K名用户颁奖。
+所以每个事件发生后，你都需要一个得奖名单（得奖区）。
+```
+
+**得奖系统的规则：**
+1，如果某个用户购买商品数为0，但是又发生了退货事件，
+     则认为该事件无效，得奖名单和上一个事件发生后一致，例子中的5用户
+2，某用户发生购买商品事件，购买商品数+1，发生退货事件，购买商品数-1
+3，每次都是最多K个用户得奖，K也为传入的参数
+      如果根据全部规则，得奖人数确实不够K个，那就以不够的情况输出结果
+
+4，得奖系统分为得奖区和候选区，任何用户只要购买数>0，
+      一定在这两个区域中的一个
+5，购买数最大的前K名用户进入得奖区，
+      在最初时如果得奖区没有到达K个用户，那么新来的用户直接进入得奖区
+6，如果购买数不足以进入得奖区的用户，进入候选区
+
+7，如果候选区购买数最多的用户，已经足以进入得奖区，
+     该用户就会替换得奖区中购买数最少的用户（大于才能替换），
+     如果得奖区中购买数最少的用户有多个，就替换最早进入得奖区的用户
+     如果候选区中购买数最多的用户有多个，机会会给最早进入候选区的用户
+
+8，候选区和得奖区是两套时间，
+     因用户只会在其中一个区域，所以只会有一个区域的时间，另一个没有
+     从得奖区出来进入候选区的用户，得奖区时间删除，
+     进入候选区的时间就是当前事件的时间（可以理解为arr[i]和op[i]中的i）
+     从候选区出来进入得奖区的用户，候选区时间删除，
+     进入得奖区的时间就是当前事件的时间（可以理解为arr[i]和op[i]中的i）
+
+9，如果某用户购买数==0，不管在哪个区域都离开，区域时间删除，
+     离开是指彻底离开，哪个区域也不会找到该用户
+     如果下次该用户又发生购买行为，产生>0的购买数，
+     会再次根据之前规则回到某个区域中，进入区域的时间重记

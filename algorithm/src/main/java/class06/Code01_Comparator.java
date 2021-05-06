@@ -53,6 +53,9 @@ public class Code01_Comparator {
         // 如果返回负数，认为第一个参数应该拍在前面
         // 如果返回正数，认为第二个参数应该拍在前面
         // 如果返回0，认为谁放前面都行
+
+        // 第一參數減去 第二參數 該數組排序之後就是升序
+        // 第二參數減去 第一參數 該數組排序之後就是降序
         @Override
         public int compare(Integer arg0, Integer arg1) {
             return arg1 - arg0;
