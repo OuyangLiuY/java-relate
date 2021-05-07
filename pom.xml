@@ -77,7 +77,7 @@
             <!-- <plugin> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-maven-plugin</artifactId>
                 </plugin> -->
         </plugins>
-
+<!-- https://bywave.crisp.help/zh/article/qv2ray-for-linux-107jl0/?bust=1616495607763 -->
     </build>
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.openjdk.jol/jol-core -->
