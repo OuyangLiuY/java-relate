@@ -1457,3 +1457,339 @@ op[i] == F就代表这个用户退货了一件商品
      离开是指彻底离开，哪个区域也不会找到该用户
      如果下次该用户又发生购买行为，产生>0的购买数，
      会再次根据之前规则回到某个区域中，进入区域的时间重记
+
+## 前缀树（prefix tree   trie）
+
+1）单个字符串中，字符从前到后的加到一棵多叉树上
+2）字符放在路上，节点上有专属的数据项（常见的是pass和end值）
+3）所有样本都这样添加，如果没有路就新建，如有路就复用
+4）沿途节点的pass值增加1，每个字符串结束时来到的节点end值增加1
+
+**例子：**
+
+设计一种结构。用户可以：
+1）void insert(String str)            添加某个字符串，可以重复添加，每次算1个
+2）int search(String str)             查询某个字符串在结构中还有几个
+3)  void delete(String str)           删掉某个字符串，可以重复删除，每次算1个
+4）int prefixNumber(String str)  查询有多少个字符串，是以str做前缀的
+
+前缀树路的实现方式:
+
+1）固定数组实现
+
+```java
+/**
+     * 使用数组实现
+     */
+    public static class Node1 {
+        public int pass;
+        public int end;
+        public Node1[] nexts;
+
+        public Node1() {
+            pass = 0;
+            end = 0;
+            // 这里只考虑26个小写字母
+            nexts = new Node1[26];
+        }
+
+    }
+
+    public static class Trie1 {
+        public Node1 root;
+
+        public Trie1() {
+            root = new Node1();
+        }
+
+        // 添加某个字符串，可以重复添加，每次算1个
+        public void insert(String word) {
+            if (word == null) {
+                return;
+            }
+            Node1 node = root;
+            node.pass++;
+            char[] chars = word.toCharArray();
+            int index = 0;
+            // 从左往右遍历 a , b , c
+            for (int i = 0; i < chars.length; i++) {
+                index = chars[i] - 'a';
+                // 路径不存在，则新建
+                if (node.nexts[index] == null) {
+                    node.nexts[index] = new Node1();
+                }
+                // 拿到下个节点node，并指向当前node
+                node = node.nexts[index];
+                node.pass++;
+            }
+            node.end++;
+        }
+
+        // 查询某个字符串在结构中还有几个
+        public int search(String word) {
+            if (word == null) {
+                return 0;
+            }
+            Node1 node = root;
+            char[] chars = word.toCharArray();
+            for (char chr : chars) {
+                int index = chr - 'a';
+                if (node.nexts[index] == null) {
+                    return 0;
+                }
+                node = node.nexts[index];
+            }
+            return node.end;
+        }
+
+        // 删掉某个字符串，可以重复删除，每次算1个
+        public void delete(String word) {
+            // 有这个word则删除，否则不处理
+            if (search(word) != 0) {
+                Node1 node = root;
+                node.pass--;
+                char[] chars = word.toCharArray();
+                for (char chr : chars) {
+                    int index = chr - 'a';
+                    // pass 为0,那么下个节点数据就不存在了...
+                    if (--node.nexts[index].pass == 0) {
+                        node.nexts[index] = null;
+                        return;
+                    }
+                    node = node.nexts[index];
+                }
+                node.end--;
+            }
+        }
+
+        // 查询有多少个字符串，是以str做前缀的
+        public int prefixNumber(String word) {
+            Node1 node = root;
+            char[] chars = word.toCharArray();
+            for (char chr : chars) {
+                int index = chr - 'a';
+                // 看下节点是否还在呢
+                if (node.nexts[index] == null) {
+                    return 0;
+                }
+                node = node.nexts[index];
+            }
+            return node.pass;
+        }
+    }
+```
+
+
+
+2）哈希表实现
+
+```java
+/**
+     * 哈系表实现
+     */
+    public static class Node2 {
+        public int pass;
+        public int end;
+        public HashMap<Integer, Node2> next;
+
+        public Node2() {
+            pass = 0;
+            end = 0;
+            next = new HashMap<>();
+        }
+    }
+
+    public static class Trie2 {
+        public Node2 root;
+
+        public Trie2() {
+            root = new Node2();
+        }
+
+        // 添加某个字符串，可以重复添加，每次算1个
+        public void insert(String word) {
+            if (word == null) {
+                return;
+            }
+            Node2 node = root;
+            node.pass++;
+            char[] chars = word.toCharArray();
+            int index = 0;
+            // 从左往右遍历 a , b , c
+            for (char chr : chars) {
+                index = chr;
+                // 路径不存在，则新建
+                if (!node.next.containsKey(index)) {
+                    node.next.put(index, new Node2());
+                }
+                // 拿到下个节点node，并指向当前node
+                node = node.next.get(index);
+                node.pass++;
+            }
+            node.end++;
+        }
+
+        // 查询某个字符串在结构中还有几个
+        public int search(String word) {
+            if (word == null) {
+                return 0;
+            }
+            Node2 node = root;
+            char[] chars = word.toCharArray();
+            for (char chr : chars) {
+                if (!node.next.containsKey((int) chr)) {
+                    return 0;
+                }
+                node = node.next.get((int) chr);
+            }
+            return node.end;
+        }
+
+        // 删掉某个字符串，可以重复删除，每次算1个
+        public void delete(String word) {
+            // 有这个word则删除，否则不处理
+            if (search(word) != 0) {
+                Node2 node = root;
+                node.pass--;
+                char[] chars = word.toCharArray();
+                for (char chr : chars) {
+                    // pass 为0,那么下个节点数据就不存在了...
+                    if (--node.next.get((int) chr).pass == 0) {
+                        node.next.remove((int) chr);
+                        return;
+                    }
+                    node = node.next.get((int) chr);
+                }
+                node.end--;
+            }
+        }
+
+        // 查询有多少个字符串，是以str做前缀的
+        public int prefixNumber(String word) {
+            Node2 node = root;
+            char[] chars = word.toCharArray();
+            for (char chr : chars) {
+                // 看下节点是否还在呢
+                if (!node.next.containsKey((int) chr)) {
+                    return 0;
+                }
+                node = node.next.get((int) chr);
+            }
+            return node.pass;
+        }
+    }
+```
+
+## 不基于比较的排序
+
+桶排序思想下的排序：计数排序 & 基数排序 
+
+1)桶排序思想下的排序都是不基于比较的排序
+
+2)时间复杂度为O(N)，额外空间负载度O(M)
+
+3)应用范围有限，需要样本的数据状况满足桶的划分 
+
+**桶排序：**
+
+```java
+// only for 0~200 value
+public  static void  countSort(int[] arr){
+    if (arr == null || arr.length < 2) {
+        return;
+    }
+    int max = Integer.MIN_VALUE;
+    for (int i = 0; i < arr.length; i++) {
+        max = Math.max(max,arr[i]);
+    }
+    int[] bucket = new int[max + 1];
+    for (int i = 0; i < arr.length; i++) {
+        bucket[arr[i]]++;
+    }
+    int i = 0;
+    for (int j = 0; j < bucket.length; j++) {
+        while (bucket[j] -- >0){
+            arr[i++] = j;
+        }
+    }
+}
+```
+
+**基数排序：**
+
+```java
+// only for no-negative value
+public static void radixSort(int[] arr) {
+    if (arr == null || arr.length < 2) {
+        return;
+    }
+    radixSort(arr, 0, arr.length - 1, maxBits(arr));
+}
+
+// 求最大位数
+private static int maxBits(int[] arr) {
+    int max = Integer.MIN_VALUE;
+    for (int cur : arr) {
+        max = Math.max(max, cur);
+    }
+    int count = 0;
+    while (max != 0) {
+        count++;
+        max = max / 10;
+    }
+    return count;
+}
+
+public static void radixSort(int[] arr, int L, int R, int digit) {
+    int i, j = 0;
+    int radix = 10;
+    // 准备当前数大小的辅助空间
+    int[] help = new int[R - L + 1];
+    for (int d = 1; d <= digit; d++) { // 有多少位，就进出多少次
+        // 辅助数组是当前数的和
+        // count[0] 当前位(d位)是0的数字有多少个
+        // count[1] 当前位(d位)是(0和1)的数字有多少个
+        // count[2] 当前位(d位)是(0、1和2)的数字有多少个
+        // count[i] 当前位(d位)是(0~i)的数字有多少个
+        int[] count = new int[radix];
+        for (i = L; i <= R; i++) {
+            j = getDigit(arr[i], d);
+            count[j]++;
+        }
+        for (i = 1; i < radix; i++) {
+            count[i] = count[i] + count[i - 1];
+        }
+        // 从右往左将arr上的数，依次找到并放入对应的位置
+        for (i = R; i >= L; i--) {
+            j = getDigit(arr[i], d);
+            help[count[j] - 1] = arr[i];
+            count[j]--;
+        }
+        for (i = L, j = 0; i <= R; i++, j++) {
+            arr[i] = help[j];
+        }
+    }
+}
+
+private static int getDigit(int v, int d) {
+    return ((v / (int) Math.pow(10, d - 1)) % 10);
+}
+```
+
+## 排序算法的稳定性
+
+稳定性是指同样大小的样本再排序之后不会改变相对次序
+对基础类型来说，稳定性毫无意义
+对非基础类型来说，稳定性有重要意义
+有些排序算法可以实现成稳定的，而有些排序算法无论如何都实现不成稳定的
+
+```txt
+1.冒泡排序可以做到稳定
+2.选择排序做不到稳定
+3.插入排序是否可以做到稳定呢？
+4.堆排序做不到稳定
+5.快排序的partition方法是不稳定的
+6.归并排序可以做到稳定
+7.希尔排序是否可以做到稳定呢？
+```
+

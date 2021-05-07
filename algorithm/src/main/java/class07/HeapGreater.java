@@ -11,6 +11,7 @@ import java.util.List;
  * T 一定是非基礎類型，有基礎類型可以包一層
  */
 public class HeapGreater<T> {
+
     // 當前數
     private ArrayList<T> heap;
     // 索引
@@ -25,7 +26,7 @@ public class HeapGreater<T> {
         comp = c;
     }
 
-   public boolean isEmpty() {
+    public boolean isEmpty() {
         return heapSize == 0;
     }
 
@@ -46,7 +47,7 @@ public class HeapGreater<T> {
         indexMap.put(v, heapSize);
         heapInsert(heapSize++);
     }
-
+    // 小根堆
     private void heapInsert(int index) {
         while (comp.compare(heap.get(index), heap.get((index - 1) / 2)) < 0) {
             swap(index, (index - 1) / 2);
@@ -55,14 +56,13 @@ public class HeapGreater<T> {
 
     }
 
-  public void resign(T obj) {
+    public void resign(T obj) {
         heapInsert(indexMap.get(obj));
         heapify(indexMap.get(obj));
     }
 
 
-
-      private void heapify(Integer index) {
+    private void heapify(Integer index) {
         //
         int left = index * 2 + 1;
         while (left < heapSize) {
