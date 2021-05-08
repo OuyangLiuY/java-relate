@@ -1,19 +1,15 @@
-package com.only.bubble;
+package class01;
 
 import utils.SortUtils;
 
-public class BubbleSort {
+public class InsertionSort {
+    public static void  insertionSort(int[] arr){
+        if (arr == null || arr.length < 2) return;
 
-
-    private static void bubbleSort(int [] arr){
-        if(arr == null || arr.length < 2) return;
-        // 0 ~ N-1
-        // 0 ~ N-2
-        // 0 ~ N-3
-        for (int e = arr.length - 1; e > 0 ; e--) {
-            for (int i = 0; i < e; i++) {
-                if(arr[i]  > arr[i + 1]){
-                    SortUtils.swapNoEqualIndex(arr,i,i + 1);
+        for (int i = 1; i < arr.length; i++) {
+            for (int j = i-1; j >= 0 ; j--) {
+                if(arr[j] > arr[j + 1]){
+                    SortUtils.swapNoEqualIndex(arr,j,j+1);
                 }
             }
         }
@@ -27,7 +23,7 @@ public class BubbleSort {
         for (int i = 0; i < testTime; i++) {
             int[] arr1 = SortUtils.generateRandomArray(maxSize, maxValue);
             int[] arr2 = SortUtils.copyArray(arr1);
-            bubbleSort(arr1);
+            insertionSort(arr1);
             SortUtils.comparator(arr2);
             if (!SortUtils.isEqual(arr1, arr2)) {
                 succeed = false;
@@ -38,7 +34,7 @@ public class BubbleSort {
 
         int[] arr = SortUtils.generateRandomArray(maxSize, maxValue);
         SortUtils.printArray(arr);
-        bubbleSort(arr);
+        insertionSort(arr);
         SortUtils.printArray(arr);
     }
 }
