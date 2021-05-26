@@ -1,5 +1,6 @@
 package class11;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -34,8 +35,16 @@ public class Code01_LevelTraversalBT {
             if(curt.right != null){
                 queue.add(curt.right);
             }
+
         }
     }
+
+    /**
+     *      1
+     *    2   3
+     *  4  5 6  7
+     * @param args
+     */
 
     public static void main(String[] args) {
         Node head = new Node(1);
