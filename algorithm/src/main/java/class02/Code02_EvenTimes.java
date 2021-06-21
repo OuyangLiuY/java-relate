@@ -34,7 +34,10 @@ public class Code02_EvenTimes {
 
     public static int bit_1_Counts(int n){
         int counts = 0;
-        // 00111011101000
+        //n:     00111011101000
+        //取反    11000100010111
+        //-n:+1  11000100011000
+        // n&-n: 00000000001000
         while(n != 0){
             // 提取出最右侧的1来的
             int rightOne = n & ((~n) + 1);
