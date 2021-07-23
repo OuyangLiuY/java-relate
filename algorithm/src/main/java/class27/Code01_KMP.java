@@ -1,4 +1,4 @@
-package code27;
+package class27;
 
 public class Code01_KMP {
 
