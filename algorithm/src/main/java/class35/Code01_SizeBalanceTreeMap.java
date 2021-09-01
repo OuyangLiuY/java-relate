@@ -82,7 +82,7 @@ public class Code01_SizeBalanceTreeMap {
                 return new SBTNode<>(key, value);
             } else {
                 cur.size++;
-                if (cur.key.compareTo(key) < 0) {
+                if (key.compareTo(cur.key) < 0) {
                     cur.l = add(cur.l, key, value);
                 } else {
                     cur.r = add(cur.r, key, value);
@@ -95,9 +95,9 @@ public class Code01_SizeBalanceTreeMap {
         // 返回cur这棵树的新头部
         private SBTNode<K, V> delete(SBTNode<K, V> cur, K key) {
             cur.size--;
-            if (cur.key.compareTo(key) < 0) {
+            if (key.compareTo(cur.key) < 0) {
                 cur.l = delete(cur.l, key);
-            } else if (cur.key.compareTo(key) > 0) {
+            } else if (key.compareTo(cur.key) > 0) {
                 cur.r = delete(cur.r, key);
             } else {
                 // 当前要删掉cur
@@ -136,9 +136,9 @@ public class Code01_SizeBalanceTreeMap {
             SBTNode<K, V> cur = root;
             while (cur != null) {
                 pre = cur;
-                if (cur.key.compareTo(key) == 0) {
+                if (key.compareTo(cur.key) == 0) {
                     break;
-                } else if (cur.key.compareTo(key) < 0) {
+                } else if (key.compareTo(cur.key) < 0) {
                     cur = cur.l;
                 } else {
                     cur = cur.r;
@@ -246,8 +246,9 @@ public class Code01_SizeBalanceTreeMap {
             SBTNode<K, V> lastIndex = findLastIndex(key);
             if (lastIndex != null && key.compareTo(lastIndex.key) == 0) {
                 return lastIndex.value;
+            } else {
+                return null;
             }
-            return null;
         }
 
         public K firstKey() {

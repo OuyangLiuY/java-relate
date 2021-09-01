@@ -52,6 +52,10 @@ public class Code01_AVLTreeMap {
             return left;
         }
 
+        public int size() {
+            return size;
+        }
+
         // 左旋
         public AVLNode<K, V> leftRotate(AVLNode<K, V> cur) {
             AVLNode<K, V> right = cur.r;
