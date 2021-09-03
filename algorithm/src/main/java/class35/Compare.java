@@ -220,7 +220,7 @@ public class Compare {
         ConcurrentSkipListMap<Integer, Integer> cSkip;
         long start;
         long end;
-        int max = 100000;
+        int max = 1000000;
         treeMap = new TreeMap<>();
         avl = new AVLTreeMap<>();
         sbt = new SizeBalancedTreeMap<>();
@@ -252,8 +252,13 @@ public class Compare {
         for (int i = 0; i < max; i++) {
             skip.put(i, i);
         }
+
         end = System.currentTimeMillis();
         System.out.println("skip 运行时间 : " + (end - start) + "ms");
+        start = System.currentTimeMillis();
+        Integer lastKey = skip.lastKey();
+        end = System.currentTimeMillis();
+        System.out.println("获取最后一个key 时间 ：" + (end - start) + "ms，" + lastKey);
 
         start = System.currentTimeMillis();
         for (int i = 0; i < max; i++) {
@@ -261,7 +266,10 @@ public class Compare {
         }
         end = System.currentTimeMillis();
         System.out.println("c skip 运行时间 : " + (end - start) + "ms");
-
+        start = System.currentTimeMillis();
+        Integer clastKey = skip.lastKey();
+        end = System.currentTimeMillis();
+        System.out.println("获取最后一个key 时间 ：" + (end - start) + "ms，" + clastKey);
         System.out.println("顺序递增删除测试，数据规模 : " + max);
         start = System.currentTimeMillis();
         for (int i = 0; i < max; i++) {
