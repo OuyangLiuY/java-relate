@@ -41,9 +41,9 @@ public class Code03_CountOfRangeSum {
 
     public static int countRangeSum2(int[] nums, int lower, int upper) {
         SizeBalancedTreeSet treeSet = new SizeBalancedTreeSet();
-        int sum = 0;
+        long sum = 0;  // 类型不能为 int，容易越界
         int ans = 0;
-        treeSet.add(0);
+        treeSet.add(0); // 一个数都没有的时候，就已经有一个前缀和累加和为0，
         for (int i = 0; i < nums.length; i++) {
             sum += nums[i]; // 前缀和
             // 求[10,20]
@@ -88,7 +88,7 @@ public class Code03_CountOfRangeSum {
             }
         }
 
-        public long lessKeySize(int key) {
+        public long lessKeySize(long key) {
             SBTNode cur = root;
             int ans = 0;
             while (cur != null) {
@@ -128,7 +128,7 @@ public class Code03_CountOfRangeSum {
             cur.size = (cur.l != null ? cur.l.size : 0) + (cur.r != null ? cur.r.size : 0) + 1;
             //all
             left.all = cur.all;
-            cur.all = (cur.l != null ? cur.l.all : 0) + (left.l != null ? left.l.all : 0) + same;
+            cur.all = (cur.l != null ? cur.l.all : 0) + (cur.r != null ? cur.r.all : 0) + same; //居然写成 (left.l != null ? left.l.all : 0) ...无语
             return left;
         }
 
@@ -203,9 +203,9 @@ public class Code03_CountOfRangeSum {
         int len = 200;
         int varible = 50;
         for (int i = 0; i < 100000; i++) {
-            int[] test = {-3,1,2,-2,2,-1};//generateArray(len, varible);
-            int lower = -3;//(int) (Math.random() * varible) - (int) (Math.random() * varible);
-            int upper = -1;//lower + (int) (Math.random() * varible);
+            int[] test = generateArray(len, varible);
+            int lower = (int) (Math.random() * varible) - (int) (Math.random() * varible);
+            int upper = lower + (int) (Math.random() * varible);
             int ans1 = countRangeSum1(test, lower, upper);
             int ans2 = countRangeSum2(test, lower, upper);
             if (ans1 != ans2) {
