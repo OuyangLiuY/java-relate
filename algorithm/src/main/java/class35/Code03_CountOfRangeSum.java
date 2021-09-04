@@ -39,6 +39,64 @@ public class Code03_CountOfRangeSum {
         return count;
     }
 
+    public static int countRangeSum3(int[] nums, int lower, int upper) {
+        int N = nums.length;
+        long[] num = new long[N];
+        num[0] = nums[0];
+        for (int i = 1; i < N; i++) {
+            num[i] = num[i - 1] + nums[i];
+        }
+        return count(num, 0, N - 1, lower, upper);
+    }
+
+    private static int count(long[] arr, int L, int R, int lower, int upper) {
+        if (L == R) {
+            if (arr[L] >= lower && arr[L] <= upper) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        int mid = (L + R) / 2;
+        int leftPar = count(arr, L, mid, lower, upper);
+        int rightPar = count(arr, mid + 1, R, lower, upper);
+        int merge = merge(arr, L, mid, R, lower, upper);
+        return leftPar + rightPar + merge;
+    }
+
+    private static int merge(long[] arr, int L, int Mid, int R, int lower, int upper) {
+        // arr 其实就是数组得前缀和
+        int ans = 0;
+        int windowL = L;
+        int windowR = L;
+        for (int i = Mid + 1; i <= R; i++) {
+            long start = arr[i] - upper;
+            long end = arr[i] - lower;
+            while (windowR <= Mid && arr[windowR] <= end) { //右指针，故要包含相等得结果
+                windowR++;
+            }
+            while (windowL <= Mid && arr[windowL] < start) { //左指针，故不相等得时候前进
+                windowL++;
+            }
+            ans += windowR - windowL;
+        }
+        long[] help = new long[R - L + 1];
+        int index = 0;
+        int p1 = L;
+        int p2 = Mid + 1;
+        while (p1 <= Mid && p2 <= R) {
+            help[index++] = arr[p1] < arr[p2] ? arr[p1++] : arr[p2++];
+        }
+        while (p1 <= Mid) {
+            help[index++] = arr[p1++];
+        }
+        while (p2 <= R) {
+            help[index++] = arr[p2++];
+        }
+        System.arraycopy(help, 0, arr, L, help.length);
+        return ans;
+    }
+
     public static int countRangeSum2(int[] nums, int lower, int upper) {
         SizeBalancedTreeSet treeSet = new SizeBalancedTreeSet();
         long sum = 0;  // 类型不能为 int，容易越界
@@ -208,7 +266,8 @@ public class Code03_CountOfRangeSum {
             int upper = lower + (int) (Math.random() * varible);
             int ans1 = countRangeSum1(test, lower, upper);
             int ans2 = countRangeSum2(test, lower, upper);
-            if (ans1 != ans2) {
+            int ans3 = countRangeSum3(test, lower, upper);
+            if (ans1 != ans2 || ans2 != ans3) {
                 printArray(test);
                 System.out.println(lower);
                 System.out.println(upper);
