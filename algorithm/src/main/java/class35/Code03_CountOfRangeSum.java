@@ -106,7 +106,8 @@ public class Code03_CountOfRangeSum {
             sum += nums[i]; // 前缀和
             // 求[10,20]
             // 等于求 a 是< 20 ，b是 < 10
-            // 减去就是结果了
+            // 减去就是结果了 (sum - lower + 1) 上限+1那么减去下限，就包含下限到上限的结果了
+            // (lessKeySize是得小于20得值，如果不+1那么就不包含20这个边界得值了)
             long a = treeSet.lessKeySize(sum - lower + 1);
             long b = treeSet.lessKeySize(sum - upper);
             ans += a - b;
