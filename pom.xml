@@ -23,6 +23,7 @@
         <module>spring-server</module>
         <module>sse</module>
         <module>guava-java</module>
+        <module>rocketmq-demo</module>
     </modules>
      <build>
         <defaultGoal>install</defaultGoal>
