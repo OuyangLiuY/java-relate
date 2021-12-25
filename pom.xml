@@ -24,6 +24,7 @@
         <module>sse</module>
         <module>guava-java</module>
         <module>rocketmq-demo</module>
+        <module>base-java</module>
     </modules>
      <build>
         <defaultGoal>install</defaultGoal>

@@ -3,7 +3,7 @@ package com.ouyangliuy.demo;
 
 import org.junit.jupiter.api.Test;
 
-public class Begin {
+public class SimpleApplication {
 
     @Test
     public void producer() throws Exception{
