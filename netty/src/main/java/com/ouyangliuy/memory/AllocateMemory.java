@@ -15,6 +15,6 @@ public class AllocateMemory {
             System.out.println(buffer.capacity());
         }
 
-       // ByteBuf byteBuf = allocator.directBuffer(1);
+        ByteBuf byteBuf = allocator.directBuffer(1);
     }
 }

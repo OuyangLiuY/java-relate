@@ -1,4 +1,4 @@
-package com.ouyangliuy.base.string;
+package com.ouyangliuy.string;
 
 import java.util.UUID;
 

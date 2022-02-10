@@ -1,11 +1,22 @@
 package com.ouyangliuy.test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MyTest {
 
 
     public static void main(String[] args) {
-
-        test();
+        String[] zsl = {"1","2","3","4"};
+        int[] rank = new int[32];
+        int i;
+        for ( i = zsl.length-1; i >= 0; i--) {
+            /* store rank that is crossed to reach the insert position */
+            rank[i] = i == zsl.length-1 ? 0 : rank[i+1];
+            rank[i] += 1;
+            System.out.println(i);
+            System.out.println(rank[i]);
+        }
     }
 
     public static void test(){

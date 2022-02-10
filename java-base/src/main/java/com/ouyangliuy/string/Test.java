@@ -1,4 +1,4 @@
-package com.ouyangliuy.base.string;
+package com.ouyangliuy.string;
 
 public class Test {
 
@@ -13,5 +13,8 @@ public class Test {
         System.out.println(anInt);
         System.out.println(Integer.toBinaryString(anInt));
         System.out.println(512 / 16);
+
+
+        System.out.println(Long.parseLong("10000000000000000000000000000000000000000000000000000000000000000000",2));
     }
 }
