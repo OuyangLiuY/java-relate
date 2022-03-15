@@ -19,13 +19,12 @@ public class MyReentrantLock {
 
 
     public static void main(String[] args) {
-
-
-
+        MyReentrantLock lock = new MyReentrantLock();
+        System.out.println(lock.compareState(1,2));
 
     }
 
-    void compareState(int expect,int update){
-        unsafe.compareAndSwapInt(this,1L,expect,update);
+    boolean compareState(int expect, int update){
+       return unsafe.compareAndSwapInt(this,1L,expect,update);
     }
 }
