@@ -10,20 +10,10 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>HandSpringMVC</module>
-        <module>netty</module>
-        <module>thread</module>
-        <module>shiro</module>
-        <module>design-mode</module>
-        <module>algorithm</module>
         <module>java-virtual-machine</module>
         <module>JavaNewFeatures</module>
         <module>proxy</module>
         <module>zookeeper</module>
-        <module>spring-server</module>
-        <module>sse</module>
-        <module>guava-java</module>
-        <module>rocketmq-demo</module>
-        <module>java-base</module>
     </modules>
      <build>
         <defaultGoal>install</defaultGoal>
